@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load filter %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Left-side menu -->
+    <div class="col-md-3 bg-light">
+      <!-- Menu content goes here -->
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_backlog' board_id %}"> Backlog </a>
+        </li>
+        <!-- Add more menu items as needed -->
+      </ul>
+    </div>
+    <!-- Centered content -->
+  <div class="col-md-9">
+    <div class="container">
+    {% if tasks %}
+      <div class="row">
+        <div class="col">
+          <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
+          {% for task in tasks|filter_status:"NS" %}
+            <div class="card mb-2">
+              <div class="card-body">
+                <h5 class="card-title">{{ task.name }}</h5>
+                <p class="card-text">{{ task.description }}</p>
+                <a href="#" class="card-link">Change status</a>
+                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="col">
+          <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
+          {% for task in tasks|filter_status:"BL" %}
+            <div class="card" >
+              <div class="card-body">
+                <h5 class="card-title">{{ task.name }}</h5>
+                <p class="card-text">{{ task.description }}</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="col">
+          <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
+          {% for task in tasks|filter_status:"PR" %}
+            <div class="card" >
+              <div class="card-body">
+                <h5 class="card-title">{{ task.name }}</h5>
+                <p class="card-text">{{ task.description }}</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="col">
+          <h4 class="card-subtitle mb-2 text-muted">Done</h4>
+          {% for task in tasks|filter_status:"DN" %}
+            <div class="card border-success" >
+              <div class="card-body text-success">
+                <h5 class="card-title">{{ task.name }}</h5>
+                <p class="card-text">{{ task.description }}</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <p>No tasks in this board.</p>
+    {% endif %}
+    {% endblock %}
+    </div>
+  </div>
+</div>

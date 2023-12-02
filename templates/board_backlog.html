@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if tasks %}
+    <h1>{{ tasks.category }}</h1>
+    <ul class="list-group">
+    {% for task in tasks %}
+        <a href="#">
+            <li class="list-group-item list-group-item-action">{{ task }}</li>
+        </a>
+    {% endfor %}
+    </ul>
+{% endif %}
+    <a href="{% url 'task_create' board_id %}">Add task</a>
+{% endblock %}

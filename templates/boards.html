@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>TODO APP - boards list</h1>
+    <ul class="list-group">
+        {% for board in boards %}
+            <a href="{% url 'board_detail' board.id %}">
+                <li class="list-group-item list-group-item-action">{{ board }}</li>
+            </a>
+        {% endfor %}
+    </ul>
+    <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_create' %}"> Create new board </a>
+{% endblock %}

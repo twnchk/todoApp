@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <h1>Add task</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit">Create new board</button>
+    </form>
+<script>
+    console.log({{form.errors}});
+</script>
+{% endblock %}

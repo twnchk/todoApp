@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>TODO APP</h1>
+    <p>
+        <a href="{% url 'boards_list' %}">
+            <button type="button" class="btn btn-light btn-lg btn-block" style="background-color: #e3f2fd;">Boards</button>
+        </a>
+    </p>
+{% endblock %}
