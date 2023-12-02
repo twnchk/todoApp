@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_coverage_plugin',
     'todoBoard.apps.TodoboardConfig',
     'templatetags.custom_filters',
     'crispy_forms',
