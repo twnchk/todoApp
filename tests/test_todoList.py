@@ -15,6 +15,7 @@ class TodoListTest(TestCase):
         # Verify
         self.assertEqual(fetched_test_object.title, test_object.title)
         self.assertEqual(fetched_test_object.description, test_object.description)
+        self.assertEqual(str(fetched_test_object), expected_title)
 
         # Cleanup
         test_object.delete()
