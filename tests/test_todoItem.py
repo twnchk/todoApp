@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError
 from todoBoard.models import TodoItem
 
+# TODO: finish tests
 
 class TodoItemTest(TestCase):
     def test_createTodoItem(self):
