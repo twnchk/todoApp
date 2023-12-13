@@ -11,3 +11,4 @@ class RegistrationForm(UserCreationForm):
 class LoginForm(AuthenticationForm):
     class Meta:
         model = CustomUser
+

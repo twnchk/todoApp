@@ -1,5 +1,6 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import authenticate, login, logout
 from .forms import RegistrationForm, LoginForm
 from .decorators import non_authenticated_only
 
@@ -32,3 +33,9 @@ def user_login(request):
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
+
+
+@login_required
+def user_logout(request):
+    logout(request)
+    return redirect('index')
