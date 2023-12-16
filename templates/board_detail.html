@@ -14,74 +14,108 @@
       </ul>
     </div>
     <!-- Centered content -->
-  <div class="col-md-9">
-    <div class="container">
-    {% if tasks %}
-      <div class="row">
-        <div class="col">
-          <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
-          {% for task in tasks|filter_status:"NS" %}
-            <div class="card mb-2">
-              <div class="card-body">
-                <h5 class="card-title">{{ task.name }}</h5>
-                <p class="card-text">{{ task.description }}</p>
-                <a href="#" class="card-link">Change status</a>
-                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
-                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+    <div class="col-md-9">
+      <div class="container rounded-container">
+      {% if tasks %}
+        <div class="row">
+          <div class="col droppable-status" id="NS">
+            <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
+            {% for task in tasks|filter_status:"NS" %}
+              <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
+                <div class="card-body">
+                  <h5 class="card-title">{{ task.name }}</h5>
+                  <p class="card-text">{{ task.description }}</p>
+                  <a href="#" class="card-link">Change status</a>
+                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                  <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+                </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
-        <div class="col">
-          <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
-          {% for task in tasks|filter_status:"BL" %}
-            <div class="card" >
-              <div class="card-body">
-                <h5 class="card-title">{{ task.name }}</h5>
-                <p class="card-text">{{ task.description }}</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
-                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+            {% endfor %}
+          </div>
+          <div class="col droppable-status" id="BL">
+            <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
+            {% for task in tasks|filter_status:"BL" %}
+              <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
+                <div class="card-body">
+                  <h5 class="card-title">{{ task.name }}</h5>
+                  <p class="card-text">{{ task.description }}</p>
+                  <a href="#" class="card-link">Card link</a>
+                  <a href="#" class="card-link">Another link</a>
+                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                  <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+                </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
-        <div class="col">
-          <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
-          {% for task in tasks|filter_status:"PR" %}
-            <div class="card" >
-              <div class="card-body">
-                <h5 class="card-title">{{ task.name }}</h5>
-                <p class="card-text">{{ task.description }}</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
-                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+            {% endfor %}
+          </div>
+          <div class="col droppable-status" id="PR">
+            <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
+            {% for task in tasks|filter_status:"PR" %}
+              <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
+                <div class="card-body">
+                  <h5 class="card-title">{{ task.name }}</h5>
+                  <p class="card-text">{{ task.description }}</p>
+                  <a href="#" class="card-link">Card link</a>
+                  <a href="#" class="card-link">Another link</a>
+                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                  <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+                </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
-        <div class="col">
-          <h4 class="card-subtitle mb-2 text-muted">Done</h4>
-          {% for task in tasks|filter_status:"DN" %}
-            <div class="card border-success" >
-              <div class="card-body text-success">
-                <h5 class="card-title">{{ task.name }}</h5>
-                <p class="card-text">{{ task.description }}</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-                <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
-                <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+            {% endfor %}
+          </div>
+          <div class="col droppable-status" id="DN">
+            <h4 class="card-subtitle mb-2 text-muted">Done</h4>
+            {% for task in tasks|filter_status:"DN" %}
+              <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
+                <div class="card-body text-success">
+                  <h5 class="card-title">{{ task.name }}</h5>
+                  <p class="card-text">{{ task.description }}</p>
+                  <a href="#" class="card-link">Card link</a>
+                  <a href="#" class="card-link">Another link</a>
+                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
+                  <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
+                </div>
               </div>
-            </div>
-          {% endfor %}
+            {% endfor %}
+          </div>
         </div>
+      {% else %}
+        <p>No tasks in this board.</p>
+      {% endif %}
+        <script>
+        $.ajaxSetup({
+            headers: { "X-CSRFToken": '{{ csrf_token }}' }
+        });
+        $(function () {
+            $(".draggable-card").draggable({
+                revert: "invalid",
+                helper: "clone",
+            });
+
+            $(".droppable-status").droppable({
+                accept: ".draggable-card",
+                drop: function (event, ui) {
+                    var taskId = ui.draggable.attr("id").split("_")[1];
+                    var newStatus = $(this).attr("id");
+
+                    // Make an AJAX request to update the task status in the backend
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'task_change_status' %}",
+                        data: {
+                            task_id: taskId,
+                            new_status: newStatus,
+                            csrfmiddlewaretoken: '{{ csrf_token }}',
+                        },
+                        success: function () {
+                            ui.draggable.appendTo($(event.target));
+                        },
+                    });
+                },
+            });
+        });
+        </script>
+      {% endblock %}
       </div>
-    {% else %}
-      <p>No tasks in this board.</p>
-    {% endif %}
-    {% endblock %}
     </div>
   </div>
 </div>

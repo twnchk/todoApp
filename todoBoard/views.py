@@ -1,4 +1,7 @@
-from django.shortcuts import render, redirect
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView
 from .models import TodoList, TodoItem
 from .forms import CreateTaskForm, CreateBoardForm
@@ -43,6 +46,22 @@ def task_create(request, board_id):
         form = CreateTaskForm(init_board_id=board_id)
 
     return render(request, template_name='create_task.html', context={'form': form})
+
+
+@csrf_protect
+def task_change_status(request):
+    if request.method == 'POST':
+        task_id = request.POST.get("task_id")
+        new_status = request.POST.get("new_status")
+        print(f'taskId = {task_id}')
+        task = get_object_or_404(TodoItem, id=task_id)
+        task.status = new_status
+
+        with transaction.atomic():
+            task.save()
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def board_create(request):
