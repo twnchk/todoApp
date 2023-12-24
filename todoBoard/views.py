@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -29,6 +30,7 @@ def board_detail(request, board_id, template_name='board_detail.html'):
     # if template_name == 'board_backlog.html'
 
 
+@login_required
 def task_create(request, board_id):
     '''
     Create new task for specific board. board_id is specified by backlog from which this view
@@ -37,13 +39,13 @@ def task_create(request, board_id):
     # Initial data for board_id, TODO: add validation to board_id, dont display form if board doesnt exist
 
     if request.method == 'POST':
-        form = CreateTaskForm(request.POST, init_board_id=board_id)
+        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=request.user.id)
         if form.is_valid():
             new_task = form.save(commit=False)
             new_task.save()
             return redirect('board_detail', board_id=board_id)
     else:
-        form = CreateTaskForm(init_board_id=board_id)
+        form = CreateTaskForm(init_board_id=board_id, user_id=request.user.id)
 
     return render(request, template_name='create_task.html', context={'form': form})
 
