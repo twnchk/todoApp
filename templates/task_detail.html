@@ -2,20 +2,37 @@
 {% block content %}
     <div class="container rounded-container">
       {% if task %}
-        <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+          <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
+          <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
+        </div>
         {% if task.high_priority is True %}
-          <h3 style="color:red">{{ task.name }}</h3>
+          <h3>
+            [{{ task.category }}]: <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
+          </h3>
         {% else %}
-          <h3>{{ task.name }}</h3>
+          <h3>
+            [{{ task.category }}]: <span id="taskName" contenteditable="false"> {{ task.name }}</span>
+          </h3>
         {% endif %}
         <div>Author: {{ task.author }}</div>
-        <div>Assignee: </div>
-        <div>Status: {{ task.get_status_display }}</div>
+        <div id="taskAssignee" contenteditable="false">Assignee: </div>
+        <div class="d-flex align-items-center">
+          Status:
+          <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;" disabled>
+            {% for value, display_text in task.taskStatus %}
+                <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
+                    {{ display_text }}
+                </option>
+            {% endfor %}
+          </select>
+        </div>
         <div>Created: {{ task.created_at }} </div>
-        <div>Deadline: {{ task.due_to }}</div>
+        <div id="taskDeadline" contenteditable="false">Deadline: {{ task.due_to }}</div>
         <div>
           Description:
-          <div class="task-description">
+          <div id="taskDescription" class="task-description" contenteditable="false">
             {{ task.description|linebreaks }}
           </div>
         </div>
@@ -23,4 +40,61 @@
       {% else %}
         <p>Task not found</p>
       {% endif %}
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+        var editBtn = document.getElementById('editBtn');
+        var saveBtn = document.getElementById('saveBtn');
+        var taskName = document.getElementById('taskName');
+        var taskAssignee = document.getElementById('taskAssignee');
+        var taskStatus = document.getElementById('taskStatus');
+        var taskDeadline = document.getElementById('taskDeadline');
+        var taskDescription = document.getElementById('taskDescription');
+
+        // Function to toggle editable styling
+        function toggleEditableStyle(element, isEditable) {
+            if (isEditable) {
+                element.classList.add('editable');
+            } else {
+                element.classList.remove('editable');
+            }
+        }
+
+        // Toggle editability on button click
+        editBtn.addEventListener('click', function(){
+            // Toggle contentEditable and style
+            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+                element.contentEditable = "true";
+                taskStatus.disabled = false;
+                toggleEditableStyle(element, true);
+            });
+
+            taskName.focus(); // Focus on the name field to start editing
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline';
+        });
+
+        // Save the changes
+        saveBtn.addEventListener('click', function(){
+            // Toggle contentEditable and remove style
+            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+                element.contentEditable = "false";
+                taskStatus.disabled = true;
+                toggleEditableStyle(element, false);
+            });
+
+            editBtn.style.display = 'inline';
+            saveBtn.style.display = 'none';
+
+            // TODO: Capture the changed data and prepare for AJAX request
+            var updatedName = taskName.textContent;
+            // ... Capture other updated fields similarly
+
+            // TODO: Here you will trigger the AJAX request with the updated data
+        });
+    });
+</script>
+
 {% endblock %}
+
+

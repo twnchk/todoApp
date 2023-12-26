@@ -82,6 +82,7 @@ def board_create(request):
 
 def task_detail(request, task_id):
     task = TodoItem.objects.get(id=task_id)
+    status_choices = TodoItem.taskStatus
     context = {'task': task}
 
     return render(request, template_name='task_detail.html', context=context)
