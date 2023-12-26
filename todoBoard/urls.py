@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import IndexView, boards_list, board_detail, task_create, board_create, task_change_status, task_detail
+from .views import IndexView, boards_list, board_detail, board_create,\
+    task_change_status, task_create, task_detail, task_update
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
@@ -10,4 +11,5 @@ urlpatterns = [
     path('boards/<int:board_id>/addTask/', task_create, name='task_create'),
     path('changeTaskStatus/', task_change_status, name='task_change_status'),
     path('task/<int:task_id>', task_detail, name='task_detail'),
+    path('taskUpdate/<int:task_id>', task_update, name='task_update'),
 ]

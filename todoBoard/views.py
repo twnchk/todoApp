@@ -1,8 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from .models import TodoList, TodoItem
 from .forms import CreateTaskForm, CreateBoardForm
@@ -82,9 +84,35 @@ def board_create(request):
 
 def task_detail(request, task_id):
     task = TodoItem.objects.get(id=task_id)
-    status_choices = TodoItem.taskStatus
     context = {'task': task}
 
     return render(request, template_name='task_detail.html', context=context)
 
 
+@csrf_protect
+@require_POST
+@login_required
+def task_update(request, task_id):
+    try:
+        body_unicode = request.body.decode("utf-8")
+        json_data = json.loads(body_unicode)
+        task = TodoItem.objects.get(id=task_id)
+        task_name = json_data.get('taskName')
+        # TODO: taskAsignee
+        task_status = json_data.get('taskStatus')
+        #task_deadline = json_data.get('taskDeadline')
+        task_description = json_data.get('taskDescription')
+        #TODO: add check whether the data has changed <- shouldn't this be done on frontend?
+        task.name = task_name
+        task.status = task_status
+        #task.due_to = task_deadline # TODO: fix to proper format
+        task.description = task_description
+
+        with transaction.atomic():
+            task.save()
+
+        return JsonResponse({'success': True})
+    except TodoItem.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format'})

@@ -42,6 +42,10 @@
       {% endif %}
     </div>
 <script>
+    $.ajaxSetup({
+            headers: { "X-CSRFToken": '{{ csrf_token }}' }
+    });
+
     document.addEventListener('DOMContentLoaded', function(){
         var editBtn = document.getElementById('editBtn');
         var saveBtn = document.getElementById('saveBtn');
@@ -87,10 +91,29 @@
             saveBtn.style.display = 'none';
 
             // TODO: Capture the changed data and prepare for AJAX request
-            var updatedName = taskName.textContent;
+            var JsonData = {
+               taskName: taskName.textContent,  // or innerText/innerHTML based on your content
+               taskAssignee: taskAssignee.textContent,
+               taskStatus: taskStatus.value,  // For <select>, you want the value attribute
+               taskDeadline: taskDeadline.textContent,
+               taskDescription: taskDescription.textContent,
+               csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
             // ... Capture other updated fields similarly
 
             // TODO: Here you will trigger the AJAX request with the updated data
+            $.ajax({
+                url: "{% url 'task_update' task.id %}",
+                type: "POST",
+                contentType: "application/json",  // Indicating the type of content being sent
+                data: JSON.stringify(JsonData),  // Converting the JavaScript object to a JSON string
+                success: function(data) {
+                    console.log('Success:', data);
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
         });
     });
 </script>
