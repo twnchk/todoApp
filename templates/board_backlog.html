@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+<div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
 {% if tasks %}
     <h1>{{ tasks.category }}</h1>
     <ul class="list-group">

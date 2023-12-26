@@ -51,6 +51,7 @@ def task_create(request, board_id):
 
 
 @csrf_protect
+@login_required
 def task_change_status(request):
     if request.method == 'POST':
         task_id = request.POST.get("task_id")
@@ -77,5 +78,12 @@ def board_create(request):
         form = CreateBoardForm()
 
     return render(request, template_name='create_board.html', context={'form': form})
+
+
+def task_detail(request, task_id):
+    task = TodoItem.objects.get(id=task_id)
+    context = {'task': task}
+
+    return render(request, template_name='task_detail.html', context=context)
 
 

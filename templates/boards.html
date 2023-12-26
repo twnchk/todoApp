@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
     <h1>TODO APP - boards list</h1>
+    <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
     <ul class="list-group">
         {% for board in boards %}
             <a href="{% url 'board_detail' board.id %}">

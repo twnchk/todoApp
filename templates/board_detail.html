@@ -21,49 +21,53 @@
           <div class="col droppable-status" id="NS">
             <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
             {% for task in tasks|filter_status:"NS" %}
+            <a href="{% url 'task_detail' task.id %}">
               <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
                 <div class="card-body">
                   <h5 class="card-title">{{ task.name }}</h5>
-                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
                   <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
                 </div>
               </div>
+            </a>
             {% endfor %}
           </div>
           <div class="col droppable-status" id="BL">
             <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
             {% for task in tasks|filter_status:"BL" %}
+            <a href="{% url 'task_detail' task.id %}">
               <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
                 <div class="card-body">
                   <h5 class="card-title">{{ task.name }}</h5>
-                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
                   <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
                 </div>
               </div>
+            </a>
             {% endfor %}
           </div>
           <div class="col droppable-status" id="PR">
             <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
             {% for task in tasks|filter_status:"PR" %}
+            <a href="{% url 'task_detail' task.id %}">
               <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
                 <div class="card-body">
                   <h5 class="card-title">{{ task.name }}</h5>
-                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
                   <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
                 </div>
               </div>
+            </a>
             {% endfor %}
           </div>
           <div class="col droppable-status" id="DN">
             <h4 class="card-subtitle mb-2 text-muted">Done</h4>
             {% for task in tasks|filter_status:"DN" %}
+            <a href="{% url 'task_detail' task.id %}">
               <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
                 <div class="card-body">
                   <h5 class="card-title">{{ task.name }}</h5>
-                  <p class="card-text"><small class="text-muted">Created: {{ task.created_at }}</small></p>
                   <p class="card-text"><small class="text-muted">Deadline: {{ task.due_to }}</small></p>
                 </div>
               </div>
+            </a>
             {% endfor %}
           </div>
         </div>

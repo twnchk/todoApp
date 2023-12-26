@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container rounded-container">
+      {% if task %}
+        <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+        {% if task.high_priority is True %}
+          <h3 style="color:red">{{ task.name }}</h3>
+        {% else %}
+          <h3>{{ task.name }}</h3>
+        {% endif %}
+        <div>Author: {{ task.author }}</div>
+        <div>Assignee: </div>
+        <div>Status: {{ task.get_status_display }}</div>
+        <div>Created: {{ task.created_at }} </div>
+        <div>Deadline: {{ task.due_to }}</div>
+        <div>
+          Description:
+          <div class="task-description">
+            {{ task.description|linebreaks }}
+          </div>
+        </div>
+
+      {% else %}
+        <p>Task not found</p>
+      {% endif %}
+{% endblock %}
