@@ -9,11 +9,13 @@
         </div>
         {% if task.high_priority is True %}
           <h3>
-            [{{ task.category }}]: <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
+            <a href="{% url 'board_detail' task.category.id %}">[{{ task.category }}]: </a>
+            <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
           </h3>
         {% else %}
           <h3>
-            [{{ task.category }}]: <span id="taskName" contenteditable="false"> {{ task.name }}</span>
+            <a href="{% url 'board_detail' task.category.id %}">[{{ task.category }}]: </a>
+            <span id="taskName" contenteditable="false"> {{ task.name }}</span>
           </h3>
         {% endif %}
         <div>Author: {{ task.author }}</div>
@@ -36,7 +38,7 @@
             {{ task.description|linebreaks }}
           </div>
         </div>
-
+      <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
       {% else %}
         <p>Task not found</p>
       {% endif %}
@@ -90,18 +92,15 @@
             editBtn.style.display = 'inline';
             saveBtn.style.display = 'none';
 
-            // TODO: Capture the changed data and prepare for AJAX request
             var JsonData = {
-               taskName: taskName.textContent,  // or innerText/innerHTML based on your content
+               taskName: taskName.textContent,
                taskAssignee: taskAssignee.textContent,
-               taskStatus: taskStatus.value,  // For <select>, you want the value attribute
+               taskStatus: taskStatus.value,
                taskDeadline: taskDeadline.textContent,
                taskDescription: taskDescription.textContent,
                csrfmiddlewaretoken: '{{ csrf_token }}'
             };
-            // ... Capture other updated fields similarly
 
-            // TODO: Here you will trigger the AJAX request with the updated data
             $.ajax({
                 url: "{% url 'task_update' task.id %}",
                 type: "POST",
@@ -115,6 +114,29 @@
                 }
             });
         });
+
+        // Delete object
+        var deleteBtn = document.getElementById('deleteBtn');
+
+        deleteBtn.addEventListener('click', function() {
+          // Confirmation prompt
+          var confirmDelete = confirm("Please confirm to delete task");
+          if (confirmDelete) {
+              $.ajax({
+                  url: "{% url 'task_delete' task.id %}",
+                  type: "POST",
+                  contentType: "application/json",
+                  headers: { "X-CSRFToken": '{{ csrf_token }}' },
+                  success: function(response) {
+                      // Redirect the user on successful delete
+                      window.location.href = '/boards/' + response.board_id + '/backlog/';
+                  },
+                  error: function(error) {
+                      console.error('Error:', error);
+                  }
+              });
+          }
+    });
     });
 </script>
 

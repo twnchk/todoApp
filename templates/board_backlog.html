@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-<div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+<div><a href="{% url 'boards_list' %}">&#8592; Back to boards</a></div>
 {% if tasks %}
     <h1>{{ tasks.category }}</h1>
-    <ul class="list-group">
+    <ul class="list-group taskList">
     {% for task in tasks %}
-        <a href="#">
-            <li class="list-group-item list-group-item-action">{{ task }}</li>
+        <a href="{% url 'task_detail' task.id %}">
+            <li class="list-group-item list-group-item-action {{ task.id }}" data-completed="{{ task.status }}">{{ task }}</li>
         </a>
     {% endfor %}
     </ul>
@@ -14,4 +14,20 @@
 {% if request.user.is_authenticated %}
     <a class="btn btn-primary btn-sm btn-block" href="{% url 'task_create' board_id %}">Add task</a>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all the list items in the task list
+    var tasks = document.querySelectorAll('.taskList a li');
+
+    // Loop through each task and apply strikethrough if completed
+    tasks.forEach(function(task) {
+        var isCompleted = task.getAttribute('data-completed') === "DN";
+        if (isCompleted) {
+            task.style.textDecoration = 'line-through';
+        }
+    });
+});
+</script>
+
 {% endblock %}

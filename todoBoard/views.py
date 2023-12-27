@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 import json
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
@@ -29,7 +30,6 @@ def board_detail(request, board_id, template_name='board_detail.html'):
     if template_name == 'board_backlog.html':
         return render(request, template_name=template_name, context=context)
     return render(request, template_name='board_detail.html', context=context)
-    # if template_name == 'board_backlog.html'
 
 
 @login_required
@@ -116,3 +116,17 @@ def task_update(request, task_id):
         return JsonResponse({'success': False, 'error': 'Task not found'})
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON format'})
+
+
+@csrf_protect
+@require_POST
+@login_required
+def task_delete(request, task_id):
+    try:
+        task = TodoItem.objects.get(id=task_id)
+        board_id = task.category.id
+        task.delete()
+
+        return JsonResponse({'success': True, 'board_id': board_id})
+    except TodoItem.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'})
