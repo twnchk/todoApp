@@ -20,6 +20,8 @@ class TodoItem(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    assignee = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, default=None,
+                                 related_name="assignee")
     category = models.ForeignKey(TodoList, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     due_to = models.DateTimeField(null=True, blank=True)

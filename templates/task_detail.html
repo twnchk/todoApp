@@ -19,7 +19,7 @@
           </h3>
         {% endif %}
         <div>Author: {{ task.author }}</div>
-        <div id="taskAssignee" contenteditable="false">Assignee: </div>
+        <div>Assignee: <span id="taskAssignee" contenteditable="false">{{ task.assignee }}</span></div>
         <div class="d-flex align-items-center">
           Status:
           <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;" disabled>
