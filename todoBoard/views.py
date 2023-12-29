@@ -36,12 +36,6 @@ def board_detail(request, board_id, template_name='board_detail.html'):
 
 @login_required
 def task_create(request, board_id):
-    '''
-    Create new task for specific board. board_id is specified by backlog from which this view
-    was requested.
-    '''
-    # Initial data for board_id, TODO: add validation to board_id, dont display form if board doesnt exist
-
     if request.method == 'POST':
         form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=request.user.id)
         if form.is_valid():
@@ -90,7 +84,7 @@ def board_create(request):
 def board_update(request, board_id):
     if request.method == 'POST':
         board = TodoList.objects.get(id=board_id)
-        if board is not None:
+        if board:
             body_unicode = request.body.decode("utf-8")
             json_data = json.loads(body_unicode)
             board_title = json_data.get('boardTitle')
@@ -106,6 +100,15 @@ def board_update(request, board_id):
         return JsonResponse({'success': False, 'error': 'Board was not found'})
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@csrf_protect
+@require_POST
+@login_required
+def board_delete(request, board_id):
+    board = get_object_or_404(TodoList, id=board_id)
+    board.delete()
+    return JsonResponse({'success': True})
 
 
 def task_detail(request, task_id):

@@ -3,11 +3,47 @@
     <h1>TODO APP - boards list</h1>
     <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
     <ul class="list-group">
-        {% for board in boards %}
+    {% for board in boards %}
+        <li class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-center mb-2">
             <a href="{% url 'board_detail' board.id %}">
-                <li class="list-group-item list-group-item-action">{{ board }}</li>
+              <span>{{ board }}</span>
             </a>
-        {% endfor %}
+              {% if request.user.is_authenticated %}
+              <button id="deleteBtn_{{ board.id }}" class="btn btn-danger btn-sm">Delete</button>
+              {% endif %}
+            </div>
+        </li>
+    {% endfor %}
     </ul>
     <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_create' %}"> Create new board </a>
+<script>
+    document.querySelectorAll("button[id^='deleteBtn_']").forEach(function(deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            // Confirmation prompt
+            var confirmDelete = confirm("Please confirm to delete task");
+            if (confirmDelete) {
+                // Extracting board ID from the button ID
+                var boardId = this.id.split("_")[1]; // `this` refers to deleteBtn in this context
+
+                var deleteUrl = `/boards/${boardId}/delete`;
+
+                $.ajax({
+                    url: deleteUrl,
+                    type: "POST",
+                    contentType: "application/json",
+                    headers: { "X-CSRFToken": '{{ csrf_token }}' },
+                    success: function(response) {
+                        // Refresh page on successful delete
+                        window.location.reload();
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }
+        });
+    });
+</script>
+
 {% endblock %}
