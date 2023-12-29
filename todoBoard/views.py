@@ -23,9 +23,11 @@ def boards_list(request):
 
 def board_detail(request, board_id, template_name='board_detail.html'):
     tasks = TodoItem.objects.filter(category=board_id)
+    board = TodoList.objects.get(id=board_id)
     context = {
         'tasks': tasks,
         'board_id': board_id,
+        'board': board,
     }
     if template_name == 'board_backlog.html':
         return render(request, template_name=template_name, context=context)
@@ -58,7 +60,6 @@ def task_change_status(request):
     if request.method == 'POST':
         task_id = request.POST.get("task_id")
         new_status = request.POST.get("new_status")
-        print(f'taskId = {task_id}')
         task = get_object_or_404(TodoItem, id=task_id)
         task.status = new_status
 
@@ -69,6 +70,7 @@ def task_change_status(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+@login_required
 def board_create(request):
     # TODO: Add permission to only create boards by logged in by certain users with specific permissions
     if request.method == 'POST':
@@ -80,6 +82,30 @@ def board_create(request):
         form = CreateBoardForm()
 
     return render(request, template_name='create_board.html', context={'form': form})
+
+
+@csrf_protect
+@require_POST
+@login_required
+def board_update(request, board_id):
+    if request.method == 'POST':
+        board = TodoList.objects.get(id=board_id)
+        if board is not None:
+            body_unicode = request.body.decode("utf-8")
+            json_data = json.loads(body_unicode)
+            board_title = json_data.get('boardTitle')
+            board_description = json_data.get('boardDescription')
+
+            board.title = board_title
+            board.description = board_description
+
+            with transaction.atomic():
+                board.save()
+
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False, 'error': 'Board was not found'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def task_detail(request, task_id):
