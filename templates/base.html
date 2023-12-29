@@ -9,14 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@200&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" type="text/css" href="{% static 'css/todoPlanner/style.css' %}">
-
+  <link rel="icon" type="image/x-icon" href="{% static 'css/todoPlanner/navbar-logo.png' %}">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark">
-    <a class="navbar-brand" href="{% url 'index' %}">Main page</a>
+    <a class="navbar-brand" href="{% url 'index' %}">
+      <img src="{% static 'css/todoPlanner/navbar-logo.png' %}" width="30" height="30"/>
+      Main page
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
