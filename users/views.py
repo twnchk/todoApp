@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from .forms import RegistrationForm, LoginForm
 from .decorators import non_authenticated_only
+from .models import Profile
 
 
 # TODO: Create tests for these views and decorator
@@ -39,3 +40,14 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect('index')
+
+
+@login_required
+def user_profile(request):
+    profile = get_object_or_404(Profile, id=request.user.id)
+    context = {
+        'profile': profile,
+    }
+    return render(request, 'user_profile.html', context)
+
+

@@ -2,10 +2,17 @@
 {% block content %}
     <div class="container rounded-container">
       {% if task %}
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
-          <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
-          <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
+        <div class="d-flex d-flex align-items-center mb-2">
+          <div class="p-2 flex-grow-1"><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+          <div class="p-2">
+            <button id="discardBtn" class="btn btn-primary btn-sm" style="display:none;">Discard</button>
+          </div>
+          <div class="p-2">
+            <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
+          </div>
+          <div class="p-2">
+            <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
+          </div>
         </div>
         {% if task.high_priority is True %}
           <h3>
@@ -51,6 +58,7 @@
     document.addEventListener('DOMContentLoaded', function(){
         var editBtn = document.getElementById('editBtn');
         var saveBtn = document.getElementById('saveBtn');
+        var discardBtn = document.getElementById('discardBtn');
         var taskName = document.getElementById('taskName');
         var taskAssignee = document.getElementById('taskAssignee');
         var taskStatus = document.getElementById('taskStatus');
@@ -78,6 +86,19 @@
             taskName.focus(); // Focus on the name field to start editing
             editBtn.style.display = 'none';
             saveBtn.style.display = 'inline';
+            discardBtn.style.display = 'inline';
+        });
+
+        discardBtn.addEventListener('click', function(){
+            // Toggle contentEditable and remove style
+            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+                element.contentEditable = "false";
+                taskStatus.disabled = true;
+                toggleEditableStyle(element, false);
+            });
+            editBtn.style.display = 'inline';
+            saveBtn.style.display = 'none';
+            discardBtn.style.display = 'none';
         });
 
         // Save the changes
@@ -91,6 +112,7 @@
 
             editBtn.style.display = 'inline';
             saveBtn.style.display = 'none';
+            discardBtn.style.display = 'none';
 
             var JsonData = {
                taskName: taskName.textContent,
