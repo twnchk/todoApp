@@ -8,7 +8,9 @@ class ProfileTest(TestCase):
     expected_email = "test@example.com"
 
     def setUp(self):
-        self.user = CustomUser.objects.create_user(self.expected_username, self.expected_email, self.expected_password)
+        self.user = CustomUser.objects.create_user(self.expected_username,
+                                                   self.expected_email,
+                                                   self.expected_password)
 
     def test_user_creation(self):
         self.assertEqual(self.user.username, self.expected_username)
@@ -19,3 +21,4 @@ class ProfileTest(TestCase):
         profile = Profile.objects.get(user=self.user)
         self.assertIsNotNone(profile)
         self.assertEqual(profile.user, self.user)
+        self.assertEqual(profile.avatar, 'default.png')
