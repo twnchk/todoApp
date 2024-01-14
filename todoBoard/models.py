@@ -3,6 +3,13 @@ from django.db import models
 
 
 class TodoList(models.Model):
+    class Meta:
+        permissions = [
+            # ("can_create_board", "Allow user to create a board"),
+            ("can_view_board", "Allow user to view board"),
+            ("can_delete_board", "Allow user to delete board"),
+            ("can_edit_board", "Allow user to edit board details"),
+        ]
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=200, null=True, blank=True)
 
@@ -11,6 +18,12 @@ class TodoList(models.Model):
 
 
 class TodoItem(models.Model):
+    class Meta:
+        permissions = [
+            ("can_edit_task", "Allow user to edit task details"),
+            ("can_delete_task", "Allow user to delete task"),
+            ("can_create_task", "Allow user to add task"),
+        ]
     taskStatus = [
         ("NS", "Not started"),
         ("BL", "Blocked"),
