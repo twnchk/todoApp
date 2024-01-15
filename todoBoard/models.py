@@ -1,17 +1,19 @@
 from users.models import CustomUser as User
 from django.db import models
+from django.contrib.auth.models import Group
 
 
 class TodoList(models.Model):
     class Meta:
         permissions = [
-            # ("can_create_board", "Allow user to create a board"),
+            ("can_create_board", "Allow user to create a board"),
             ("can_view_board", "Allow user to view board"),
             ("can_delete_board", "Allow user to delete board"),
             ("can_edit_board", "Allow user to edit board details"),
         ]
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=200, null=True, blank=True)
+    allowed_groups = models.ManyToManyField(Group, related_name='allowed_boards', blank=True)
 
     def __str__(self):
         return self.title

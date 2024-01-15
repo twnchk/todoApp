@@ -1,9 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseForbidden
 import json
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
@@ -24,6 +23,17 @@ def boards_list(request):
 def board_detail(request, board_id, template_name='board_detail.html'):
     tasks = TodoItem.objects.filter(category=board_id)
     board = TodoList.objects.get(id=board_id)
+
+    user_groups = request.user.groups.all()
+    allowed_groups = board.allowed_groups.all()
+    print(f'allowed_groups.count() {allowed_groups.count()}')
+    for perm in allowed_groups:
+        print(f' perm = {perm.permissions}')
+
+    print(f'user.has_perm(todoBoard.can_view_board) == {request.user.has_perm("todoBoard.can_view_board")}')
+    print(f'(user_groups and allowed_groups).exists() == {(user_groups and allowed_groups).exists()}')
+    if not(user_groups and allowed_groups).exists() or not request.user.has_perm('todoBoard.can_view_board'):
+        return HttpResponseForbidden("You don't have permission to view this board.")
     context = {
         'tasks': tasks,
         'board_id': board_id,
