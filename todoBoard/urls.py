@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import IndexView, boards_list, board_detail, board_create, board_update, board_delete,\
+from .views import IndexView, boards_list, board_detail, board_create, board_update, board_delete, \
     task_change_status, task_create, task_detail, task_update, task_delete
 
 urlpatterns = [
