@@ -39,7 +39,6 @@ class TodoItem(models.Model):
                                  related_name="assignee")
     category = models.ForeignKey(TodoList, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    due_to = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=taskStatus, default=taskStatus[0])
     high_priority = models.BooleanField(default=False)
 
