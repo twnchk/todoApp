@@ -26,14 +26,9 @@ def board_detail(request, board_id, template_name='board_detail.html'):
 
     user_groups = request.user.groups.all()
     allowed_groups = board.allowed_groups.all()
-    print(f'allowed_groups.count() {allowed_groups.count()}')
-    for perm in allowed_groups:
-        print(f' perm = {perm.permissions}')
 
-    print(f'user.has_perm(todoBoard.can_view_board) == {request.user.has_perm("todoBoard.can_view_board")}')
-    print(f'(user_groups and allowed_groups).exists() == {(user_groups and allowed_groups).exists()}')
-    if not(user_groups and allowed_groups).exists() or not request.user.has_perm('todoBoard.can_view_board'):
-        return HttpResponseForbidden("You don't have permission to view this board.")
+    if not (user_groups and allowed_groups).exists() or not request.user.has_perm('todoBoard.can_view_board'):
+        return render(request, template_name='forbidden.html')
     context = {
         'tasks': tasks,
         'board_id': board_id,
