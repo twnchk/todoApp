@@ -55,6 +55,4 @@ class ProfileViewTest(TestCase):
         response = self.client.get(reverse('user_profile'))
 
         self.assertEqual(response.status_code, 302)
-
-        # TODO: Assert that user is redirected to home page
-        # self.assertTemplateUsed(response, 'user_profile.html')
+        self.assertRedirects(response, '/login/?next=/profile/')
