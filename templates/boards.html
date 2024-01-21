@@ -30,7 +30,7 @@
             <a href="{% url 'board_detail' board.id %}" class="text-decoration-none">
               {{ board.title }}
             </a>
-            {% if request.user.is_authenticated %}
+            {% if request.user.is_authenticated and perms.todoBoard.can_delete_board %}
                 <button id="deleteBtn_{{ board.id }}" class="btn btn-danger btn-sm">Delete</button>
             {% endif %}
           </div>
