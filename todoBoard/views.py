@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from .models import TodoList, TodoItem
 from .forms import CreateTaskForm, CreateBoardForm
+from .decorators import task_editor_required, board_editor_required, board_admin_required
 
 
 class IndexView(TemplateView):
@@ -20,15 +21,10 @@ def boards_list(request):
     return render(request, template_name='boards.html', context=context)
 
 
+@board_editor_required(TodoList)
 def board_detail(request, board_id, template_name='board_detail.html'):
     tasks = TodoItem.objects.filter(category=board_id)
     board = TodoList.objects.get(id=board_id)
-
-    user_groups = request.user.groups.all()
-    allowed_groups = board.allowed_groups.all()
-
-    if not (user_groups and allowed_groups).exists() or not request.user.has_perm('todoBoard.can_view_board'):
-        return render(request, template_name='forbidden.html')
     context = {
         'tasks': tasks,
         'board_id': board_id,
@@ -55,13 +51,13 @@ def task_create(request, board_id):
 
 @csrf_protect
 @login_required
+@task_editor_required
 def task_change_status(request):
     if request.method == 'POST':
         task_id = request.POST.get("task_id")
         new_status = request.POST.get("new_status")
         task = get_object_or_404(TodoItem, id=task_id)
         task.status = new_status
-
         with transaction.atomic():
             task.save()
 
@@ -110,6 +106,7 @@ def board_update(request, board_id):
 @csrf_protect
 @require_POST
 @login_required
+@board_admin_required(TodoList)
 def board_delete(request, board_id):
     board = get_object_or_404(TodoList, id=board_id)
     board.delete()
@@ -126,6 +123,7 @@ def task_detail(request, task_id):
 @csrf_protect
 @require_POST
 @login_required
+@task_editor_required
 def task_update(request, task_id):
     try:
         body_unicode = request.body.decode("utf-8")
@@ -134,12 +132,10 @@ def task_update(request, task_id):
         task_name = json_data.get('taskName')
         # TODO: taskAsignee
         task_status = json_data.get('taskStatus')
-        #task_deadline = json_data.get('taskDeadline')
         task_description = json_data.get('taskDescription')
         #TODO: add check whether the data has changed <- shouldn't this be done on frontend?
         task.name = task_name
         task.status = task_status
-        #task.due_to = task_deadline # TODO: fix to proper format
         task.description = task_description
 
         with transaction.atomic():
@@ -155,6 +151,7 @@ def task_update(request, task_id):
 @csrf_protect
 @require_POST
 @login_required
+@task_editor_required
 def task_delete(request, task_id):
     try:
         task = TodoItem.objects.get(id=task_id)
