@@ -4,34 +4,27 @@
 <div class="container mt-5">
     <div class="row">
         <!-- Profile Image Column -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <img src="{{ profile.avatar.url }}" alt="Profile Image" class="img-thumbnail">
         </div>
-        
         <!-- Profile Details Column -->
         <div class="col-md-8">
             <h2>{{ profile.user.username }}</h2>
             <p class="text-muted">{{ profile.user.email }}</p>
             <p class="text-muted">{{ profile.user.first_name }}</p>
             <p class="text-muted">{{ profile.user.last_name }}</p>
-            <div class="mb-2">
+            <div class="list-group rounded-container mb-2">
                 <h5>Active in:</h5>
-                <ul class="list-group">
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Cras justo odio
-                    <span class="badge badge-primary badge-pill">14</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Dapibus ac facilisis in
-                    <span class="badge badge-primary badge-pill">2</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Morbi leo risus
-                    <span class="badge badge-primary badge-pill">1</span>
-                  </li>
-                </ul>
+                {% for group in profile.user.groups.all %}
+                    {% for board in group.allowed_boards.all %}
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="{% url 'board_detail' board.id %}" class="text-decoration-none">
+                            {{ board.title }}
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
             </div>
-            <!-- Add more fields as necessary -->
         </div>
     </div>
 </div>

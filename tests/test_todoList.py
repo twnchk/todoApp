@@ -153,3 +153,8 @@ class TodoListViewTest(TestCase):
         test_permissions_group.delete()
         user.delete()
         test_board.delete()
+
+    def test_boards_list_view(self):
+        response = self.client.get(reverse('boards_list'))
+        self.assertTemplateUsed(response, 'boards.html')
+        self.assertEqual(response.status_code, 200)
