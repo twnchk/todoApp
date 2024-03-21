@@ -44,9 +44,16 @@ def user_logout(request):
 
 @login_required
 def user_profile(request):
-    profile = get_object_or_404(Profile, user_id=request.user.id)
+    user = request.user
+    profile = get_object_or_404(Profile, user_id=user.id)
+    user_boards = set()
+
+    for group in user.groups.all():
+        user_boards.update(group.allowed_boards.all())
+
     context = {
         'profile': profile,
+        'user_boards': user_boards,
     }
     return render(request, 'user_profile.html', context)
 
