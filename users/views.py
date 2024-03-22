@@ -6,7 +6,6 @@ from .decorators import non_authenticated_only
 from .models import Profile
 
 
-# TODO: Create tests for these views and decorator
 @non_authenticated_only
 def register(request):
     if request.method == 'POST':
