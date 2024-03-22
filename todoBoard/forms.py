@@ -19,7 +19,4 @@ class CreateTaskForm(forms.ModelForm):
 class CreateBoardForm(forms.ModelForm):
     class Meta:
         model = TodoList
-        fields = '__all__'
-        widgets = {
-            'allowed_groups': forms.CheckboxSelectMultiple
-        }
+        exclude = ('allowed_groups',)

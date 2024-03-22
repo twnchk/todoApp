@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
@@ -71,8 +73,25 @@ def board_create(request):
     if request.method == 'POST':
         form = CreateBoardForm(request.POST)
         if form.is_valid():
-            new_board = form.save()
-            return redirect('board_detail', board_id=new_board.pk)
+            new_board_group_name = form.cleaned_data['title'] + ' admins'
+            new_group, created = Group.objects.get_or_create(name=new_board_group_name)
+
+            if created:
+                board_content_type = ContentType.objects.get_for_model(TodoList)
+                task_content_type = ContentType.objects.get_for_model(TodoItem)
+                board_permissions = Permission.objects.filter(content_type=board_content_type)
+                task_permissions = Permission.objects.filter(content_type=task_content_type)
+
+                new_group.permissions.add(*board_permissions)
+                new_group.permissions.add(*task_permissions)
+                request.user.groups.add(new_group)
+
+                new_board = form.save()
+                new_board.allowed_groups.add(new_group)
+
+                return redirect('board_detail', board_id=new_board.pk)
+            else:
+                form.add_error(None, 'A group with this name already exists.')
     else:
         form = CreateBoardForm()
 

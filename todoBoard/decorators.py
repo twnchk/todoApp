@@ -23,7 +23,7 @@ def is_user_in_allowed_group_for_board(user, board):
     user_groups = user.groups.all()
     allowed_groups = board.allowed_groups.all()
 
-    if not (user_groups and allowed_groups).exists() or not user.has_perm('todoBoard.can_view_board'):
+    if not (user_groups and allowed_groups).exists():
         return False
     return True
 

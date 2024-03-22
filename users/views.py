@@ -49,7 +49,6 @@ def user_profile(request):
 
     for group in user.groups.all():
         user_boards.update(group.allowed_boards.all())
-
     context = {
         'profile': profile,
         'user_boards': user_boards,

@@ -13,7 +13,6 @@ class TodoListTest(TestCase):
         expected_description = "Lorem Ipsum"
 
         test_object = TodoList.objects.create(title=expected_title, description=expected_description)
-
         fetched_test_object = TodoList.objects.get(id=test_object.id)
 
         # Verify
@@ -158,3 +157,34 @@ class TodoListViewTest(TestCase):
         response = self.client.get(reverse('boards_list'))
         self.assertTemplateUsed(response, 'boards.html')
         self.assertEqual(response.status_code, 200)
+
+    def test_board_create_new_group_created(self):
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        form_url = reverse('board_create')
+        form_data = {
+            'title': 'DummyBoard'
+        }
+
+        # Simulate form submission
+        response = self.client.post(form_url, form_data)
+
+        # Verify board was created and new group was created as well
+        created_board = TodoList.objects.filter(title='DummyBoard')
+        self.assertTrue(created_board.exists(), 'Board was not created.')
+        self.assertTrue(created_board.get().allowed_groups.filter(name='DummyBoard admins').exists(),
+                        'Group was not added to board')
+        self.assertTrue(Group.objects.filter(name='DummyBoard admins').exists(), 'Group was not created')
+        self.assertTrue(user.groups.filter(name='DummyBoard admins').exists(), "User was not added to the group.")
+
+        self.assertRedirects(response, '/boards/1')
+
+        user.delete()
