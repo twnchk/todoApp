@@ -6,23 +6,14 @@
     </div>
     <div class="container rounded-container">
         <div class="container widget-container">
-            <a href="{% url 'boards_list' %}" class="widget-link">
-                <div class="rounded-container widget">Boards</div>
-            </a>
             <a href="{% url 'board_create' %}" class="widget-link">
                 <div class="rounded-container widget-green">Create new board</div>
             </a>
-            <a href="#" class="widget-link">
-                <div class="rounded-container widget">Recent Activity</div>
+            <a href="{% url 'boards_list' %}" class="widget-link">
+                <div class="rounded-container widget">Boards</div>
             </a>
             <a href="{% url 'user_profile' %}" class="widget-link">
                 <div class="rounded-container widget">Profile</div>
-            </a>
-            <a href="#" class="widget-link">
-                <div class="rounded-container widget">Calendar</div>
-            </a>
-            <a href="#" class="widget-link">
-                <div class="rounded-container widget">Favorite Projects</div>
             </a>
         </div>
     </div>
