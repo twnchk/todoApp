@@ -16,12 +16,12 @@
         </div>
         {% if task.high_priority is True %}
           <h3>
-            <a href="{% url 'board_detail' task.category.id %}">[{{ task.category }}]: </a>
+            <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
             <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
           </h3>
         {% else %}
           <h3>
-            <a href="{% url 'board_detail' task.category.id %}">[{{ task.category }}]: </a>
+            <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
             <span id="taskName" contenteditable="false"> {{ task.name }}</span>
           </h3>
         {% endif %}

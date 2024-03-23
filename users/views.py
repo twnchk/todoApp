@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from .forms import RegistrationForm, LoginForm
+from .forms import RegistrationForm, LoginForm, ProfileImageForm
 from .decorators import non_authenticated_only
 from .models import Profile
 
@@ -44,14 +44,23 @@ def user_logout(request):
 @login_required
 def user_profile(request):
     user = request.user
-    profile = get_object_or_404(Profile, user_id=user.id)
+    profile = get_object_or_404(Profile, user=user)
     user_boards = set()
 
     for group in user.groups.all():
         user_boards.update(group.allowed_boards.all())
+
+    if request.method == 'POST':
+        form = ProfileImageForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+    else:
+        form = ProfileImageForm(instance=profile)
+
     context = {
         'profile': profile,
         'user_boards': user_boards,
+        'form': form,
     }
     return render(request, 'user_profile.html', context)
 

@@ -153,10 +153,21 @@ class TodoListViewTest(TestCase):
         user.delete()
         test_board.delete()
 
-    def test_boards_list_view(self):
+    def test_boards_list_view_user_logged_in(self):
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
         response = self.client.get(reverse('boards_list'))
         self.assertTemplateUsed(response, 'boards.html')
         self.assertEqual(response.status_code, 200)
+
+        user.delete()
 
     def test_board_create_new_group_created(self):
         # Prepare dummy user object

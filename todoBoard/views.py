@@ -17,11 +17,15 @@ class IndexView(TemplateView):
     template_name = 'index.html'
 
 
+@login_required()
 def boards_list(request):
-    boards = TodoList.objects.all()
     user = request.user
+    boards = set()
+    for group in user.groups.all():
+        boards.update(group.allowed_boards.all())
 
-    user_has_delete_perm = (user.is_authenticated and user.has_perm('todoBoard.can_delete_board')) or user.is_superuser
+    user_has_delete_perm = ((user.is_authenticated and user.has_perm('todoBoard.can_delete_board'))
+                            or user.is_superuser)
 
     for board in boards:
         if user.is_superuser:
