@@ -19,6 +19,18 @@ class IndexView(TemplateView):
 
 def boards_list(request):
     boards = TodoList.objects.all()
+    user = request.user
+
+    user_has_delete_perm = user.is_authenticated and user.has_perm('todoBoard.can_delete_board')
+
+    for board in boards:
+        if user_has_delete_perm:
+            user_group_ids = set(user.groups.values_list('id', flat=True))
+            allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
+            board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
+        else:
+            board.show_delete_button = False
+
     context = {'boards': boards}
     return render(request, template_name='boards.html', context=context)
 

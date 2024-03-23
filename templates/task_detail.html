@@ -61,7 +61,6 @@
         var taskName = document.getElementById('taskName');
         var taskAssignee = document.getElementById('taskAssignee');
         var taskStatus = document.getElementById('taskStatus');
-        var taskDeadline = document.getElementById('taskDeadline');
         var taskDescription = document.getElementById('taskDescription');
 
         // Function to toggle editable styling
@@ -76,7 +75,7 @@
         // Toggle editability on button click
         editBtn.addEventListener('click', function(){
             // Toggle contentEditable and style
-            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "true";
                 taskStatus.disabled = false;
                 toggleEditableStyle(element, true);
@@ -90,7 +89,7 @@
 
         discardBtn.addEventListener('click', function(){
             // Toggle contentEditable and remove style
-            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "false";
                 taskStatus.disabled = true;
                 toggleEditableStyle(element, false);
@@ -103,7 +102,7 @@
         // Save the changes
         saveBtn.addEventListener('click', function(){
             // Toggle contentEditable and remove style
-            [taskName, taskAssignee, taskStatus, taskDeadline, taskDescription].forEach(function(element) {
+            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "false";
                 taskStatus.disabled = true;
                 toggleEditableStyle(element, false);
@@ -117,7 +116,6 @@
                taskName: taskName.textContent,
                taskAssignee: taskAssignee.textContent,
                taskStatus: taskStatus.value,
-               taskDeadline: taskDeadline.textContent,
                taskDescription: taskDescription.textContent,
                csrfmiddlewaretoken: '{{ csrf_token }}'
             };
