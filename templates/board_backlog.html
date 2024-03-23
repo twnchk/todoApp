@@ -16,7 +16,7 @@
     <div class="col-md-9">
       <div class="list-group rounded-container">
         {% if tasks %}
-        <h1>{{ tasks.category }}</h1>
+        <h1>{{ tasks.board }}</h1>
             {% for task in tasks %}
               <a href="{% url 'task_detail' task.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center taskList" data-completed="{{ task.status }}">
                 {{ task }}

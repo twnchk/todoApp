@@ -37,7 +37,7 @@ class TodoItem(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     assignee = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, default=None,
                                  related_name="assignee")
-    category = models.ForeignKey(TodoList, on_delete=models.CASCADE)
+    board = models.ForeignKey(TodoList, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=15, choices=taskStatus, default=taskStatus[0])
     high_priority = models.BooleanField(default=False)

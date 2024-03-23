@@ -9,11 +9,8 @@ class CreateTaskForm(forms.ModelForm):
 
     def __init__(self, *args, init_board_id, user_id, **kwargs):
         super(CreateTaskForm, self).__init__(*args, **kwargs)
-
-        # set initial board_id field
-        self.fields['category'].initial = init_board_id
+        self.fields['board'].initial = init_board_id
         self.fields['author'].initial = user_id
-        # self.fields['category'].widget.attrs['disabled'] = True
 
 
 class CreateBoardForm(forms.ModelForm):

@@ -39,7 +39,7 @@ def boards_list(request):
 
 @board_editor_required(TodoList)
 def board_detail(request, board_id, template_name='board_detail.html'):
-    tasks = TodoItem.objects.filter(category=board_id)
+    tasks = TodoItem.objects.filter(board=board_id)
     board = TodoList.objects.get(id=board_id)
     context = {
         'tasks': tasks,
@@ -188,7 +188,7 @@ def task_update(request, task_id):
 def task_delete(request, task_id):
     try:
         task = TodoItem.objects.get(id=task_id)
-        board_id = task.category.id
+        board_id = task.board.id
         task.delete()
 
         return JsonResponse({'success': True, 'board_id': board_id})

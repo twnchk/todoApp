@@ -4,28 +4,27 @@
     <div class="container rounded-container">
         <h1>TODO APP</h1>
     </div>
-    <div class="container widget-container">
-        <a href="{% url 'boards_list' %}" class="widget-link">
-            <div class="rounded-container widget">Your Boards</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Recent Activity</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Project Overview</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Calendar</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Quick Add Task</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Favorite Projects</div>
-        </a>
-        <a href="#" class="widget-link">
-            <div class="rounded-container widget">Team Activity Stream</div>
-        </a>
+    <div class="container rounded-container">
+        <div class="container widget-container">
+            <a href="{% url 'boards_list' %}" class="widget-link">
+                <div class="rounded-container widget">Boards</div>
+            </a>
+            <a href="{% url 'board_create' %}" class="widget-link">
+                <div class="rounded-container widget-green">Create new board</div>
+            </a>
+            <a href="#" class="widget-link">
+                <div class="rounded-container widget">Recent Activity</div>
+            </a>
+            <a href="{% url 'user_profile' %}" class="widget-link">
+                <div class="rounded-container widget">Profile</div>
+            </a>
+            <a href="#" class="widget-link">
+                <div class="rounded-container widget">Calendar</div>
+            </a>
+            <a href="#" class="widget-link">
+                <div class="rounded-container widget">Favorite Projects</div>
+            </a>
+        </div>
     </div>
 </div>
 
