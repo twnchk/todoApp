@@ -6,7 +6,7 @@ from functools import wraps
 
 def task_editor_required(view):
     def wrapped_view(request, *args, **kwargs):
-        if request.user.has_perm('todoBoard.can_edit_task'):
+        if request.user.has_perm('todoBoard.can_edit_task') or request.user.is_superuser:
             return view(request, *args, **kwargs)
         else:
             error_msg = "Not enough privileges. Please contact board administrator."
@@ -23,7 +23,7 @@ def is_user_in_allowed_group_for_board(user, board):
     user_group_ids = set(user.groups.values_list('id', flat=True))
     allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
 
-    return bool(user_group_ids & allowed_group_ids)
+    return bool(user_group_ids & allowed_group_ids) or user.is_superuser
 
 
 def board_editor_required(model):
@@ -55,7 +55,7 @@ def board_admin_required(model):
             board = get_object_or_404(model, id=board_id)
             group_name = str(board.title + ' admins')
 
-            if request.user.groups.filter(name=group_name).exists():
+            if request.user.groups.filter(name=group_name).exists() or request.user.is_superuser:
                 return view(request, board_id, *args, **kwargs)
             else:
                 messages.error(request, "Not enough privileges. Please contact board administrator.")

@@ -21,10 +21,12 @@ def boards_list(request):
     boards = TodoList.objects.all()
     user = request.user
 
-    user_has_delete_perm = user.is_authenticated and user.has_perm('todoBoard.can_delete_board')
+    user_has_delete_perm = (user.is_authenticated and user.has_perm('todoBoard.can_delete_board')) or user.is_superuser
 
     for board in boards:
-        if user_has_delete_perm:
+        if user.is_superuser:
+            board.show_delete_button = True
+        elif user_has_delete_perm:
             user_group_ids = set(user.groups.values_list('id', flat=True))
             allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
             board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
