@@ -7,7 +7,7 @@ urlpatterns = [
     path('register/', register, name='register'),
     path('login/', user_login, name='user_login'),
     path('logout/', user_logout, name='user_logout'),
-    path('profile/', user_profile, name='user_profile'),
+    path('profile/<int:id>', user_profile, name='user_profile'),
 ]
 
 if settings.DEBUG:

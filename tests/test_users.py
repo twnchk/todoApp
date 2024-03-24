@@ -43,7 +43,7 @@ class ProfileViewTest(TestCase):
         login = self.client.login(username=self.expected_username, password=self.expected_password)
         self.assertTrue(login)
 
-        response = self.client.get(reverse('user_profile'))
+        response = self.client.get(reverse('user_profile', kwargs={'id': self.user.id}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user_profile.html')
         self.assertEqual(response.context['user'], self.user)
@@ -52,7 +52,7 @@ class ProfileViewTest(TestCase):
         login = self.client.login(username=self.expected_username, password='invalid_passwd')
         self.assertFalse(login)
 
-        response = self.client.get(reverse('user_profile'))
+        response = self.client.get(reverse('user_profile', kwargs={'id': self.user.id}))
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, '/login/?next=/profile/')
+        self.assertRedirects(response, '/login/?next=/profile/1')

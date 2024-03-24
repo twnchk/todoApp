@@ -1,54 +1,74 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="container rounded-container">
-      {% if task %}
-        <div class="d-flex d-flex align-items-center mb-2">
-          <div class="p-2 flex-grow-1"><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
-          <div class="p-2">
+<div class="container rounded-container">
+    {% if task %}
+    <div class="d-flex d-flex align-items-center mb-2">
+        <div class="p-2 flex-grow-1"><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
+        <div class="p-2">
             <button id="discardBtn" class="btn btn-primary btn-sm" style="display:none;">Discard</button>
-          </div>
-          <div class="p-2">
+        </div>
+        <div class="p-2">
             <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
-          </div>
-          <div class="p-2">
+        </div>
+        <div class="p-2">
             <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
-          </div>
         </div>
-        {% if task.high_priority is True %}
-          <h3>
-            <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
-            <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
-          </h3>
-        {% else %}
-          <h3>
-            <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
-            <span id="taskName" contenteditable="false"> {{ task.name }}</span>
-          </h3>
-        {% endif %}
-        <div>Author: {{ task.author }}</div>
-        <div>Assignee: <span id="taskAssignee" contenteditable="false">{{ task.assignee }}</span></div>
-        <div class="d-flex align-items-center">
-          Status:
-          <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;" disabled>
-            {% for value, display_text in task.taskStatus %}
-                <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
-                    {{ display_text }}
-                </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>Created: {{ task.created_at }} </div>
-        <div>
-          Description:
-          <div id="taskDescription" class="task-description" contenteditable="false">
-            {{ task.description|linebreaks }}
-          </div>
-        </div>
-      <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
-      {% else %}
-        <p>Task not found</p>
-      {% endif %}
     </div>
+    {% if task.high_priority is True %}
+    <h3>
+        <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
+        <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
+    </h3>
+    {% else %}
+    <h3>
+        <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
+        <span id="taskName" contenteditable="false"> {{ task.name }}</span>
+    </h3>
+    {% endif %}
+    <div class="assignee-info d-flex align-items-center">
+        <a href="{% url 'user_profile' task.author.profile.id %}">
+            <div>
+                Author: <span class="assignee-username">{{ task.author }}</span>
+                <img src="{{ task.author.profile.avatar.url }}" alt="Assignee Image" class="user-avatar mr-2">
+            </div>
+        </a>
+    </div>
+    <div class="assignee-info d-flex align-items-center">
+        {% if task.assignee %}
+        <a href="{% url 'user_profile' task.assignee.profile.id %}">
+            <div>
+                Assignee: <span id="taskAssignee" contenteditable="false" class="assignee-username">{{ task.assignee.username }}</span>
+                <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image" class="user-avatar mr-2">
+            </div>
+
+        </a>
+        {% else %}
+        <div>Assignee: <span id="taskAssignee" contenteditable="false" class="assignee-username">{{ task.assignee.username }}</span></div>
+        {% endif %}
+    </div>
+    <div class="d-flex align-items-center">
+        Status:
+        <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;"
+                disabled>
+            {% for value, display_text in task.taskStatus %}
+            <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
+                {{ display_text }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>Created: {{ task.created_at }}</div>
+    <div>
+        Description:
+        <div id="taskDescription" class="task-description" contenteditable="false">
+            {{ task.description|linebreaks }}
+        </div>
+    </div>
+    <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
+    {% else %}
+    <p>Task not found</p>
+    {% endif %}
+</div>
 <script>
     $.ajaxSetup({
             headers: { "X-CSRFToken": '{{ csrf_token }}' }
