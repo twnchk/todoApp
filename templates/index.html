@@ -6,6 +6,12 @@
     </div>
     <div class="container rounded-container">
         <div class="container widget-container">
+            {% if request.user.is_authenticated %}
+                {% if request.user.is_superuser %}
+                <a href="{% url 'all_boards_list' %}" class="widget-link">
+                    <div class="rounded-container widget">All Boards</div>
+                </a>
+                {% endif %}
             <a href="{% url 'board_create' %}" class="widget-link">
                 <div class="rounded-container widget-green">Create new board</div>
             </a>
@@ -15,6 +21,14 @@
             <a href="{% url 'user_profile' %}" class="widget-link">
                 <div class="rounded-container widget">Profile</div>
             </a>
+            {% else %}
+            <a href="{% url 'user_login' %}" class="widget-link">
+                <div class="rounded-container widget">Login</div>
+            </a>
+            <a href="{% url 'register' %}" class="widget-link">
+                <div class="rounded-container widget">Sign up</div>
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>

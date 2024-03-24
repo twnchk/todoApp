@@ -41,6 +41,18 @@ def boards_list(request):
     return render(request, template_name='boards.html', context=context)
 
 
+@login_required()
+def all_boards_list(request):
+    if not request.user.is_superuser:
+        return render(request, template_name='forbidden.html')
+    boards = TodoList.objects.all()
+
+    for board in boards:
+        board.show_delete_button = True
+
+    return render(request, template_name='boards.html', context={'boards': boards})
+
+
 @board_editor_required(TodoList)
 def board_detail(request, board_id, template_name='board_detail.html'):
     tasks = TodoItem.objects.filter(board=board_id)
@@ -170,7 +182,7 @@ def task_update(request, task_id):
         # TODO: taskAsignee
         task_status = json_data.get('taskStatus')
         task_description = json_data.get('taskDescription')
-        #TODO: add check whether the data has changed <- shouldn't this be done on frontend?
+        # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
         task.name = task_name
         task.status = task_status
         task.description = task_description
