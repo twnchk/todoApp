@@ -1,6 +1,7 @@
 from users.models import CustomUser as User
 from django.db import models
 from django.contrib.auth.models import Group
+from django.conf import settings
 
 
 class TodoList(models.Model):
@@ -11,6 +12,7 @@ class TodoList(models.Model):
             ("can_delete_board", "Allow user to delete board"),
             ("can_edit_board", "Allow user to edit board details"),
         ]
+
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=200, null=True, blank=True)
     allowed_groups = models.ManyToManyField(Group, related_name='allowed_boards', blank=True)
@@ -26,6 +28,7 @@ class TodoItem(models.Model):
             ("can_delete_task", "Allow user to delete task"),
             ("can_create_task", "Allow user to add task"),
         ]
+
     taskStatus = [
         ("NS", "Not started"),
         ("BL", "Blocked"),
@@ -34,8 +37,9 @@ class TodoItem(models.Model):
     ]
     name = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    assignee = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, default=None,
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=True, blank=True,
+                                 default=None,
                                  related_name="assignee")
     board = models.ForeignKey(TodoList, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -44,4 +48,3 @@ class TodoItem(models.Model):
 
     def __str__(self):
         return self.name
-

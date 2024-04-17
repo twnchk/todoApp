@@ -48,7 +48,7 @@
             <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm ml-2" style="width: auto;"
                     disabled>
                 {% for assignee in assignees %}
-                <option value="{{ assignee }}" {% if task.assignee == assignee.id %}selected{% endif %}>
+                <option value="{{ assignee.pk }}" {% if task.assignee == assignee.id %}selected{% endif %}>
                     {{ assignee }}
                 </option>
                 {% endfor %}

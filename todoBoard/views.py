@@ -164,11 +164,9 @@ def board_delete(request, board_id):
 
 
 def task_detail(request, task_id):
-    task = TodoItem.objects.get(id=task_id)
-    allowed_group_ids = set(task.board.allowed_groups.values_list('id', flat=True))
-    print(f'allowed_group_ids = {allowed_group_ids}')
-    assignees = CustomUser.objects.filter(user__groups__in=allowed_group_ids)
-    print(f'assigness = {assignees}')
+    task = get_object_or_404(TodoItem, id=task_id)
+    allowed_group_ids = task.board.allowed_groups.values_list('id', flat=True)
+    assignees = CustomUser.objects.filter(groups__id__in=allowed_group_ids).distinct()
     context = {
         'task': task,
         'assignees': assignees,
@@ -185,16 +183,17 @@ def task_update(request, task_id):
     try:
         body_unicode = request.body.decode("utf-8")
         json_data = json.loads(body_unicode)
-        task = TodoItem.objects.get(id=task_id)
+        task = get_object_or_404(TodoItem, id=task_id)
         task_name = json_data.get('taskName')
-        task_assignee = json_data.get('taskAssignee')
+        task_assignee_id = int(json_data.get('taskAssignee'))
         task_status = json_data.get('taskStatus')
         task_description = json_data.get('taskDescription')
         # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
         task.name = task_name
         task.status = task_status
         task.description = task_description
-        task.assignee = task_assignee
+        new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
+        task.assignee = new_assignee
 
         with transaction.atomic():
             task.save()
