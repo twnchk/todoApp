@@ -43,7 +43,18 @@
 
         </a>
         {% else %}
-        <div>Assignee: <span id="taskAssignee" contenteditable="false" class="assignee-username">{{ task.assignee.username }}</span></div>
+        <div class="d-flex align-items-center">
+            Assignee:
+            <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm ml-2" style="width: auto;"
+                    disabled>
+                {% for assignee in assignees %}
+                <option value="{{ assignee }}" {% if task.assignee == assignee.id %}selected{% endif %}>
+                    {{ assignee }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+<!--        <div>Assignee: <span id="" contenteditable="false" class="assignee-username">{{ task.assignee.username }}</span></div>-->
         {% endif %}
     </div>
     <div class="d-flex align-items-center">
@@ -98,6 +109,7 @@
             [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "true";
                 taskStatus.disabled = false;
+                taskAssignee.disabled = false;
                 toggleEditableStyle(element, true);
             });
 
@@ -112,6 +124,7 @@
             [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "false";
                 taskStatus.disabled = true;
+                taskAssignee.disabled = true;
                 toggleEditableStyle(element, false);
             });
             editBtn.style.display = 'inline';
@@ -125,6 +138,7 @@
             [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
                 element.contentEditable = "false";
                 taskStatus.disabled = true;
+                taskAssignee.disabled = true;
                 toggleEditableStyle(element, false);
             });
 
@@ -134,7 +148,7 @@
 
             var JsonData = {
                taskName: taskName.textContent,
-               taskAssignee: taskAssignee.textContent,
+               taskAssignee: taskAssignee.value,
                taskStatus: taskStatus.value,
                taskDescription: taskDescription.textContent,
                csrfmiddlewaretoken: '{{ csrf_token }}'

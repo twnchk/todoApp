@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from .models import TodoList, TodoItem
+from users.models import CustomUser
 from .forms import CreateTaskForm, CreateBoardForm
 from .decorators import task_editor_required, board_editor_required, board_admin_required
 
@@ -164,7 +165,14 @@ def board_delete(request, board_id):
 
 def task_detail(request, task_id):
     task = TodoItem.objects.get(id=task_id)
-    context = {'task': task}
+    allowed_group_ids = set(task.board.allowed_groups.values_list('id', flat=True))
+    print(f'allowed_group_ids = {allowed_group_ids}')
+    assignees = CustomUser.objects.filter(user__groups__in=allowed_group_ids)
+    print(f'assigness = {assignees}')
+    context = {
+        'task': task,
+        'assignees': assignees,
+    }
 
     return render(request, template_name='task_detail.html', context=context)
 
@@ -179,13 +187,14 @@ def task_update(request, task_id):
         json_data = json.loads(body_unicode)
         task = TodoItem.objects.get(id=task_id)
         task_name = json_data.get('taskName')
-        # TODO: taskAsignee
+        task_assignee = json_data.get('taskAssignee')
         task_status = json_data.get('taskStatus')
         task_description = json_data.get('taskDescription')
         # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
         task.name = task_name
         task.status = task_status
         task.description = task_description
+        task.assignee = task_assignee
 
         with transaction.atomic():
             task.save()
