@@ -18,6 +18,19 @@ class IndexView(TemplateView):
     template_name = 'index.html'
 
 
+# Board views
+@login_required()
+def all_boards_list(request):
+    if not request.user.is_superuser:
+        return render(request, template_name='forbidden.html')
+    boards = TodoList.objects.all()
+
+    for board in boards:
+        board.show_delete_button = True
+
+    return render(request, template_name='boards.html', context={'boards': boards})
+
+
 @login_required()
 def boards_list(request):
     user = request.user
@@ -42,18 +55,6 @@ def boards_list(request):
     return render(request, template_name='boards.html', context=context)
 
 
-@login_required()
-def all_boards_list(request):
-    if not request.user.is_superuser:
-        return render(request, template_name='forbidden.html')
-    boards = TodoList.objects.all()
-
-    for board in boards:
-        board.show_delete_button = True
-
-    return render(request, template_name='boards.html', context={'boards': boards})
-
-
 @board_editor_required(TodoList)
 def board_detail(request, board_id, template_name='board_detail.html'):
     tasks = TodoItem.objects.filter(board=board_id)
@@ -66,36 +67,6 @@ def board_detail(request, board_id, template_name='board_detail.html'):
     if template_name == 'board_backlog.html':
         return render(request, template_name=template_name, context=context)
     return render(request, template_name='board_detail.html', context=context)
-
-
-@login_required
-def task_create(request, board_id):
-    if request.method == 'POST':
-        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=request.user.id)
-        if form.is_valid():
-            new_task = form.save(commit=False)
-            new_task.save()
-            return redirect('board_detail', board_id=board_id)
-    else:
-        form = CreateTaskForm(init_board_id=board_id, user_id=request.user.id)
-
-    return render(request, template_name='create_task.html', context={'form': form})
-
-
-@csrf_protect
-@login_required
-@task_editor_required
-def task_change_status(request):
-    if request.method == 'POST':
-        task_id = request.POST.get("task_id")
-        new_status = request.POST.get("new_status")
-        task = get_object_or_404(TodoItem, id=task_id)
-        task.status = new_status
-        with transaction.atomic():
-            task.save()
-
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 @login_required
@@ -161,6 +132,37 @@ def board_delete(request, board_id):
     board = get_object_or_404(TodoList, id=board_id)
     board.delete()
     return JsonResponse({'success': True})
+
+
+# Task views
+@login_required
+def task_create(request, board_id):
+    if request.method == 'POST':
+        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=request.user.id)
+        if form.is_valid():
+            new_task = form.save(commit=False)
+            new_task.save()
+            return redirect('board_detail', board_id=board_id)
+    else:
+        form = CreateTaskForm(init_board_id=board_id, user_id=request.user.id)
+
+    return render(request, template_name='create_task.html', context={'form': form})
+
+
+@csrf_protect
+@login_required
+@task_editor_required
+def task_change_status(request):
+    if request.method == 'POST':
+        task_id = request.POST.get("task_id")
+        new_status = request.POST.get("new_status")
+        task = get_object_or_404(TodoItem, id=task_id)
+        task.status = new_status
+        with transaction.atomic():
+            task.save()
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def task_detail(request, task_id):
