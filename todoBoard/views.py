@@ -71,7 +71,6 @@ def board_detail(request, board_id, template_name='board_detail.html'):
 
 @login_required
 def board_create(request):
-    # TODO: Add permission to only create boards by logged in by certain users with specific permissions
     if request.method == 'POST':
         form = CreateBoardForm(request.POST)
         if form.is_valid():
