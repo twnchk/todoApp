@@ -8,7 +8,7 @@ __pycache__/
 *.env
 
 # Database
-db.sqlite3
+*.sqlite3
 
 # Static files
 /static/
@@ -84,3 +84,6 @@ __pycache__/
 
 # Ignore pytest cache
 .pytest_cache/
+
+# Ignore JSON files
+*.json
