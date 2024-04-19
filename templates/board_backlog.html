@@ -7,10 +7,17 @@
         <!-- Left-side panel -->
         <div class="col-md-3">
             <div class="list-group rounded-container">
+                {% if not board.is_archived %}
                 <a href="{% url 'task_create' board.id %}"
                    class="list-group-item list-group-item-action bg-primary text-white btn-sm text-center">
                     Add task
                 </a>
+                {% else %}
+                <a href="{% url 'task_create' board.id %}"
+                   class="list-group-item list-group-item-action bg-primary text-white btn-sm disabled text-center">
+                    Board is closed
+                </a>
+                {% endif %}
             </div>
         </div>
 

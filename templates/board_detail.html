@@ -22,7 +22,12 @@
                 <li class="nav-item">
                     <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_backlog' board_id %}"> Backlog </a>
                 </li>
-                <!-- Add more menu items as needed -->
+                <li class="nav-item mt-2">
+                    <form action="{% url 'board_close' board.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm btn-block">Close Board</button>
+                    </form>
+                </li>
             </ul>
         </div>
         <!-- Centered content -->

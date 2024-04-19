@@ -19,7 +19,7 @@ class IndexView(TemplateView):
 
 
 # Board views
-@login_required()
+@login_required
 def all_boards_list(request):
     if not request.user.is_superuser:
         return render(request, template_name='forbidden.html')
@@ -31,7 +31,7 @@ def all_boards_list(request):
     return render(request, template_name='boards.html', context={'boards': boards})
 
 
-@login_required()
+@login_required
 def boards_list(request):
     user = request.user
     boards = set()
@@ -66,7 +66,10 @@ def board_detail(request, board_id, template_name='board_detail.html'):
     }
     if template_name == 'board_backlog.html':
         return render(request, template_name=template_name, context=context)
-    return render(request, template_name='board_detail.html', context=context)
+    elif board.is_archived:
+        return render(request, template_name='board_detail_archive.html', context=context)
+    else:
+        return render(request, template_name='board_detail.html', context=context)
 
 
 @login_required
@@ -133,17 +136,64 @@ def board_delete(request, board_id):
     return JsonResponse({'success': True})
 
 
+@login_required
+@board_editor_required(TodoList)
+def board_close(request, board_id):
+    board = get_object_or_404(TodoList, id=board_id)
+    for task in board.todoitem_set.all():
+        if task.status != "DN":
+            task.status = "DN"
+            task.save()
+    board.is_archived = True
+    board.save()
+    return redirect('board_detail', board_id=board_id)
+
+
+@login_required
+@board_editor_required(TodoList)
+def board_reopen(request, board_id):
+    board = get_object_or_404(TodoList, id=board_id)
+    board.is_archived = False
+    board.save()
+    return redirect('board_detail', board_id=board_id)
+
+
+@login_required
+def archived_boards_list(request):
+    user = request.user
+    boards = set()
+    for group in user.groups.all():
+        boards.update(group.allowed_boards.filter(is_archived=True))
+
+    user_has_delete_perm = ((user.is_authenticated and user.has_perm('todoBoard.can_delete_board'))
+                            or user.is_superuser)
+
+    for board in boards:
+        if user.is_superuser:
+            board.show_delete_button = True
+        elif user_has_delete_perm:
+            user_group_ids = set(user.groups.values_list('id', flat=True))
+            allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
+            board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
+        else:
+            board.show_delete_button = False
+
+    context = {'boards': boards}
+    return render(request, template_name='archived_boards.html', context=context)
+
+
 # Task views
 @login_required
 def task_create(request, board_id):
+    user = get_object_or_404(CustomUser, id=request.user.id)
     if request.method == 'POST':
-        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=request.user.id)
+        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=user.id)
         if form.is_valid():
             new_task = form.save(commit=False)
             new_task.save()
             return redirect('board_detail', board_id=board_id)
     else:
-        form = CreateTaskForm(init_board_id=board_id, user_id=request.user.id)
+        form = CreateTaskForm(init_board_id=board_id, user_id=user.id)
 
     return render(request, template_name='create_task.html', context={'form': form})
 
@@ -156,9 +206,10 @@ def task_change_status(request):
         task_id = request.POST.get("task_id")
         new_status = request.POST.get("new_status")
         task = get_object_or_404(TodoItem, id=task_id)
-        task.status = new_status
-        with transaction.atomic():
-            task.save()
+        if not task.board.is_archived:
+            task.status = new_status
+            with transaction.atomic():
+                task.save()
 
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
@@ -185,19 +236,20 @@ def task_update(request, task_id):
         body_unicode = request.body.decode("utf-8")
         json_data = json.loads(body_unicode)
         task = get_object_or_404(TodoItem, id=task_id)
-        task_name = json_data.get('taskName')
-        task_assignee_id = int(json_data.get('taskAssignee'))
-        task_status = json_data.get('taskStatus')
-        task_description = json_data.get('taskDescription')
-        # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
-        task.name = task_name
-        task.status = task_status
-        task.description = task_description
-        new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
-        task.assignee = new_assignee
+        if not task.board.is_archived:
+            task_name = json_data.get('taskName')
+            task_assignee_id = int(json_data.get('taskAssignee'))
+            task_status = json_data.get('taskStatus')
+            task_description = json_data.get('taskDescription')
+            # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
+            task.name = task_name
+            task.status = task_status
+            task.description = task_description
+            new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
+            task.assignee = new_assignee
 
-        with transaction.atomic():
-            task.save()
+            with transaction.atomic():
+                task.save()
 
         return JsonResponse({'success': True})
     except TodoItem.DoesNotExist:

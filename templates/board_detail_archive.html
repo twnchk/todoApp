@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %} TODO Backlog {% endblock %}
+{% block content %}
+{% load filter %}
+<div class="container-fluid">
+    <div id="message-container"></div>
+    {% if board %}
+    <div class="container rounded-container">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4>Board (closed): <span id="boardTitle">{{ board.title }}</span></h4>
+        </div>
+        <h6>Description: <span id="boardDescription">{{ board.description }}</span></h6>
+    </div>
+    {% endif %}
+    <div class="row">
+        <!-- Left-side menu -->
+        <div class="col-md-3">
+            <!-- Menu content goes here -->
+            <ul class="nav flex-column side-menu">
+                <li class="nav-item">
+                    <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_backlog' board_id %}"> Backlog </a>
+                </li>
+                <li class="nav-item mt-2">
+                    <form action="{% url 'board_reopen' board.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm btn-block">Reopen Board</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        <!-- Centered content -->
+        <div class="col-md-9">
+            <div class="container rounded-container">
+                {% if tasks %}
+                <div class="row">
+                    <div class="col droppable-status" id="NS">
+                        <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
+                        {% for task in tasks|filter_status:"NS" %}
+                        <div class="card mb-2" id="task_{{ task.id }}">
+                            <a href="{% url 'task_detail' task.id %}" class="card-link">
+                                <div class="card-body">
+                                    <p class="card-title">{{ task.name }}</p>
+                                    <div class="assignee-info d-flex align-items-center">
+                                        {% if task.assignee %}
+                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
+                                             class="user-avatar mr-2">
+                                        <span class="assignee-username">{{ task.assignee.username }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col droppable-status" id="BL">
+                        <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
+                        {% for task in tasks|filter_status:"BL" %}
+                        <div class="card mb-2 " id="task_{{ task.id }}">
+                            <a href="{% url 'task_detail' task.id %}" class="card-link">
+                                <div class="card-body">
+                                    <p class="card-title">{{ task.name }}</p>
+                                    <div class="assignee-info d-flex align-items-center">
+                                        {% if task.assignee %}
+                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
+                                             class="user-avatar mr-2">
+                                        <span class="assignee-username">{{ task.assignee.username }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col droppable-status" id="PR">
+                        <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
+                        {% for task in tasks|filter_status:"PR" %}
+                        <div class="card mb-2 " id="task_{{ task.id }}">
+                            <a href="{% url 'task_detail' task.id %}" class="card-link">
+                                <div class="card-body">
+                                    <p class="card-title">{{ task.name }}</p>
+                                    <div class="assignee-info d-flex align-items-center">
+                                        {% if task.assignee %}
+                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
+                                             class="user-avatar mr-2">
+                                        <span class="assignee-username">{{ task.assignee.username }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col droppable-status" id="DN">
+                        <h4 class="card-subtitle mb-2 text-muted">Done</h4>
+                        {% for task in tasks|filter_status:"DN" %}
+                        <div class="card mb-2 " id="task_{{ task.id }}">
+                            <a href="{% url 'task_detail' task.id %}" class="card-link">
+                                <div class="card-body">
+                                    <p class="card-title">{{ task.name }}</p>
+                                    <div class="assignee-info d-flex align-items-center">
+                                        {% if task.assignee %}
+                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
+                                             class="user-avatar mr-2">
+                                        <span class="assignee-username">{{ task.assignee.username }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p>No tasks in this board.</p>
+                {% endif %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</div>

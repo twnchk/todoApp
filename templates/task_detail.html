@@ -12,7 +12,9 @@
             <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
         </div>
         <div class="p-2">
+            {% if not task.board.is_archived %}
             <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
+            {% endif %}
         </div>
     </div>
     {% if task.high_priority is True %}
@@ -22,7 +24,13 @@
     </h3>
     {% else %}
     <h3>
-        <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
+        <a href="{% url 'board_detail' task.board.id %}">
+            {% if not task.board.is_archived %}
+            [{{ task.board }}]:
+            {% else %}
+            [Closed: {{ task.board }}]:
+            {% endif %}
+        </a>
         <span id="taskName" contenteditable="false"> {{ task.name }}</span>
     </h3>
     {% endif %}
@@ -75,7 +83,9 @@
             {{ task.description|linebreaks }}
         </div>
     </div>
+    {% if not task.board.is_archived %}
     <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
+    {% endif %}
     {% else %}
     <p>Task not found</p>
     {% endif %}

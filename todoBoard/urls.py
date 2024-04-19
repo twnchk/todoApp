@@ -1,10 +1,14 @@
 from django.urls import path
-from .views import IndexView, boards_list, all_boards_list, board_detail, board_create, board_update, board_delete, \
+from .views import IndexView, boards_list, archived_boards_list, board_close, board_reopen, all_boards_list, \
+    board_detail, \
+    board_create, \
+    board_update, board_delete, \
     task_change_status, task_create, task_detail, task_update, task_delete
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
     path('boards/', boards_list, name='boards_list'),
+    path('boards/archive/', archived_boards_list, name='archived_boards'),
     path('allBoards/', all_boards_list, name='all_boards_list'),
     path('addBoard/', board_create, name='board_create'),
     path('boards/<int:board_id>', board_detail, name='board_detail'),
@@ -12,6 +16,8 @@ urlpatterns = [
     path('boards/<int:board_id>/addTask/', task_create, name='task_create'),
     path('boards/<int:board_id>/update', board_update, name='board_update'),
     path('boards/<int:board_id>/delete', board_delete, name='board_delete'),
+    path('boards/<int:board_id>/close', board_close, name='board_close'),
+    path('boards/<int:board_id>/open', board_reopen, name='board_reopen'),
     path('changeTaskStatus/', task_change_status, name='task_change_status'),
     path('task/<int:task_id>', task_detail, name='task_detail'),
     path('taskUpdate/<int:task_id>', task_update, name='task_update'),
