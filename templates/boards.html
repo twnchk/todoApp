@@ -2,7 +2,11 @@
 {% block title %} TODO Boards {% endblock %}
 {% block content %}
 <div class="container-fluid">
+    {% if request.user.is_superuser %}
+    <h1>All boards on website:</h1>
+    {% else %}
     <h1>Your Boards:</h1>
+    {% endif %}
     <div class="row">
         <div class="col-md-3">
             <div class="list-group rounded-container">

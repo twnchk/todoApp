@@ -27,13 +27,7 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                <a class="nav-link" href="#">About</a>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link" href="{% url 'boards_list' %}"><strong>Boards</strong></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Contact</a>
             </li>
             <li class="nav-item">
                 {% if not user.is_authenticated %}
