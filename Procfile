@@ -1,1 +1,1 @@
-web: gunicorn todoPlanner.wsgi --log-file -
+web: python manage.py migrate && gunicorn todoPlanner.wsgi --log-file -
