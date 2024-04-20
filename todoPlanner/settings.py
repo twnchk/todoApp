@@ -158,4 +158,5 @@ EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 
-CSRF_TRUSTED_ORIGINS = 'https://*.railway.app'
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['https://*.railway.app',]
