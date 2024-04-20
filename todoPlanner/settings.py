@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [".railway.app", "localhost", "127.0.0.1", "0.0.0.0"]
 
@@ -157,3 +157,5 @@ EMAIL_PORT = env.str('EMAIL_PORT')
 EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
+
+CSRF_TRUSTED_ORIGINS = 'https://*.railway.app'
