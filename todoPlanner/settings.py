@@ -129,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-MEDIA_URL = '/media'
+MEDIA_URL = 'media/'
 MEDIA_ROOT = env.str("RAILWAY_VOLUME_MOUNT_PATH")
 
 STATIC_URL = "/static/"
