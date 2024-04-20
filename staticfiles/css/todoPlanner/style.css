@@ -1,0 +1,120 @@
+body {
+  background-image: url("so-white.png")
+}
+.navbar {
+  background-color: #0068d6;
+}
+
+.logo {
+    width: 30px;
+    height: 30px;
+}
+
+.rounded-container {
+  margin-bottom: 1rem;
+  background-color: #f3f3f3;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.widget-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.widget-link {
+  width: calc(33.333% - 20px);
+  margin: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.widget-link:hover {
+  text-decoration: none;
+  color: black;
+}
+
+.widget {
+  width: 100%;
+  background-color: #ffffff;
+  margin: 0;
+}
+
+.widget-green {
+    background-color: #28a745;
+    color: #f3f3f3;
+    margin: 0;
+}
+
+.widget-green:hover {
+    background-color: #1c702f;
+    color: #f3f3f3;
+}
+
+.widget:hover{
+  background-color: #f9f9f9;
+}
+
+.task-description {
+  font-size: 0.8rem;
+  font-family: 'Source Code Pro', monospace;
+  min-height:100px;
+  border: 1px solid gray;
+  padding: 5px;
+  background-color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.card {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.card-subtitle {
+  color: #6c757d;
+}
+
+.droppable-status {
+  min-height: 600px;
+  border-right: 1px solid #c4c4c4;
+  cursor: pointer;
+}
+
+.droppable-status:last-child {
+  border-right: none;
+}
+
+.side-menu {
+  background-color: #f3f3f3;
+  width: 300 px;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.editable {
+    background-color: white;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 2px;
+    border: 1px solid #d1d1d1;
+}
+
+.img-thumbnail {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.assignee-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    object-fit: cover;
+}
