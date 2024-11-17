@@ -1,18 +1,20 @@
 from django.urls import path
-from .views import IndexView, boards_list, archived_boards_list, board_close, board_reopen, all_boards_list, \
+from .views import IndexView, archived_boards_list, board_close, board_reopen, \
     board_detail, \
     board_create, \
     board_update, board_delete, \
     task_change_status, task_create, task_detail, task_update, task_delete
 
+from .views import AllBoardsListView, UserBoardsListView, BoardDetailView, BoardBacklogDetailView
+
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
-    path('boards/', boards_list, name='boards_list'),
+    path('boards/', UserBoardsListView.as_view(), name='boards_list'),
     path('boards/archive/', archived_boards_list, name='archived_boards'),
-    path('allBoards/', all_boards_list, name='all_boards_list'),
+    path('allBoards/', AllBoardsListView.as_view(), name='all_boards_list'),
     path('addBoard/', board_create, name='board_create'),
-    path('boards/<int:board_id>', board_detail, name='board_detail'),
-    path('boards/<int:board_id>/backlog/', board_detail, {'template_name': 'board_backlog.html'}, name='board_backlog'),
+    path('boards/<int:pk>', BoardDetailView.as_view(), name='board_detail'),
+    path('boards/<int:pk>/backlog/', BoardBacklogDetailView.as_view(), name='board_backlog'),
     path('boards/<int:board_id>/addTask/', task_create, name='task_create'),
     path('boards/<int:board_id>/update', board_update, name='board_update'),
     path('boards/<int:board_id>/delete', board_delete, name='board_delete'),

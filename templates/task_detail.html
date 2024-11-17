@@ -118,7 +118,7 @@
             headers: { "X-CSRFToken": '{{ csrf_token }}' }
     });
 
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function() {
         var editBtn = document.getElementById('editBtn');
         var saveBtn = document.getElementById('saveBtn');
         var discardBtn = document.getElementById('discardBtn');
@@ -127,79 +127,55 @@
         var taskStatus = document.getElementById('taskStatus');
         var taskDescription = document.getElementById('taskDescription');
 
-        // Function to toggle editable styling
-        function toggleEditableStyle(element, isEditable) {
-            if (isEditable) {
-                element.classList.add('editable');
-            } else {
-                element.classList.remove('editable');
-            }
+        function toggleEditableState(isEditable) {
+            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
+                element.contentEditable = isEditable ? "true" : "false";
+                element.disabled = !isEditable;
+                element.classList.toggle('editable', isEditable);
+            });
         }
 
-        // Toggle editability on button click
-        editBtn.addEventListener('click', function(){
-            // Toggle contentEditable and style
-            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
-                element.contentEditable = "true";
-                taskStatus.disabled = false;
-                taskAssignee.disabled = false;
-                toggleEditableStyle(element, true);
-            });
-
-            taskName.focus(); // Focus on the name field to start editing
+        editBtn.onclick = function() {
+            toggleEditableState(true);
             editBtn.style.display = 'none';
             saveBtn.style.display = 'inline';
             discardBtn.style.display = 'inline';
-        });
+        };
 
-        discardBtn.addEventListener('click', function(){
-            // Toggle contentEditable and remove style
-            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
-                element.contentEditable = "false";
-                taskStatus.disabled = true;
-                taskAssignee.disabled = true;
-                toggleEditableStyle(element, false);
-            });
+        discardBtn.onclick = function() {
+            toggleEditableState(false);
             editBtn.style.display = 'inline';
             saveBtn.style.display = 'none';
             discardBtn.style.display = 'none';
-        });
+        };
 
-        // Save the changes
-        saveBtn.addEventListener('click', function(){
-            // Toggle contentEditable and remove style
-            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
-                element.contentEditable = "false";
-                taskStatus.disabled = true;
-                taskAssignee.disabled = true;
-                toggleEditableStyle(element, false);
-            });
-
-            editBtn.style.display = 'inline';
-            saveBtn.style.display = 'none';
-            discardBtn.style.display = 'none';
-
-            var JsonData = {
-               taskName: taskName.textContent,
-               taskAssignee: taskAssignee.value,
-               taskStatus: taskStatus.value,
-               taskDescription: taskDescription.textContent,
-               csrfmiddlewaretoken: '{{ csrf_token }}'
+        saveBtn.onclick = function() {
+            var jsonData = {
+                'taskName': taskName.textContent,
+                'taskAssignee': taskAssignee.value,
+                'taskStatus': taskStatus.value,
+                'taskDescription': taskDescription.textContent,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
             };
 
             $.ajax({
                 url: "{% url 'task_update' task.id %}",
-                type: "POST",
-                contentType: "application/json",  // Indicating the type of content being sent
-                data: JSON.stringify(JsonData),  // Converting the JavaScript object to a JSON string
-                success: function(data) {
-                    console.log('Success:', data);
+                method: "POST",
+                data: jsonData,
+                success: function(response) {
+                    console.log('Success:', response);
+                    toggleEditableState(false);
+                    editBtn.style.display = 'inline';
+                    saveBtn.style.display = 'none';
+                    discardBtn.style.display = 'none';
                 },
-                error: function(error) {
-                    console.error('Error:', error);
+                error: function(xhr, status, error) {
+                    console.error('Error:', xhr.responseText);
                 }
             });
-        });
+        };
+    });
+
 
     // Delete object
     $('#deleteConfirmModal').on('show.bs.modal', function (event) {

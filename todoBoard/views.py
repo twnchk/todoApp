@@ -1,13 +1,20 @@
+# TODO: refactor whole file to CBVs
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView
+
+from django.views.generic import TemplateView, ListView, DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from .mixins import LoginAndSuperUserRequiredMixin
+
 from .models import TodoList, TodoItem
 from users.models import CustomUser
 from .forms import CreateTaskForm, CreateBoardForm
@@ -19,40 +26,76 @@ class IndexView(TemplateView):
 
 
 # Board views
-@login_required
-def all_boards_list(request):
-    if not request.user.is_superuser:
-        return render(request, template_name='forbidden.html')
-    boards = TodoList.objects.all()
+class AllBoardsListView(LoginAndSuperUserRequiredMixin, ListView):
+    model = TodoList
+    context_object_name = 'boards'
+    template_name = 'boards.html'
+    paginate_by = 25
 
-    for board in boards:
-        board.show_delete_button = True
-
-    return render(request, template_name='boards.html', context={'boards': boards})
-
-
-@login_required
-def boards_list(request):
-    user = request.user
-    boards = set()
-    for group in user.groups.all():
-        boards.update(group.allowed_boards.all())
-
-    user_has_delete_perm = ((user.is_authenticated and user.has_perm('todoBoard.can_delete_board'))
-                            or user.is_superuser)
-
-    for board in boards:
-        if user.is_superuser:
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        for board in queryset:
             board.show_delete_button = True
-        elif user_has_delete_perm:
-            user_group_ids = set(user.groups.values_list('id', flat=True))
-            allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
-            board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
-        else:
-            board.show_delete_button = False
 
-    context = {'boards': boards}
-    return render(request, template_name='boards.html', context=context)
+        return queryset
+
+
+class UserBoardsListView(LoginRequiredMixin, ListView):
+    model = TodoList
+    context_object_name = 'boards'
+    template_name = 'boards.html'
+    paginate_by = 25
+
+    def get_queryset(self):
+        boards = super().get_queryset()
+        user = self.request.user
+        return boards.filter(Q(allowed_groups__in=user.groups.all()) | Q(pk=user.pk)).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        user_has_delete_perm = user.has_perm('todoBoard.can_delete_board') or user.is_superuser
+        for board in context['boards']:
+            if user.is_superuser:
+                board.show_delete_button = True
+            elif user_has_delete_perm:
+                user_group_ids = set(user.groups.values_list('id', flat=True))
+                allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
+                board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
+            else:
+                board.show_delete_button = False
+
+        return context
+
+
+class BoardDetailView(LoginRequiredMixin, DetailView):
+    model = TodoList
+    context_object_name = 'board'
+    template_name = 'board_detail.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        board = self.get_object()
+        if not board.is_user_allowed(request.user):
+            return render(request, 'forbidden.html')
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tasks'] = TodoItem.objects.filter(board=self.object)
+        return context
+
+    def get_template_names(self):
+        template_name = super().get_template_names()
+        board = self.get_object()
+        if board.is_archived:
+            template_name = ['board_detail_archive.html']
+        return template_name
+
+
+class BoardBacklogDetailView(BoardDetailView):
+    template_name = 'board_backlog.html'
+    # TODO: resolve a bug when trying to access backlog for archived board
 
 
 @board_editor_required(TodoList)
@@ -93,7 +136,7 @@ def board_create(request):
                 new_board = form.save()
                 new_board.allowed_groups.add(new_group)
 
-                return redirect('board_detail', board_id=new_board.pk)
+                return redirect('board_detail', pk=new_board.pk)
             else:
                 form.add_error(None, 'A group with this name already exists.')
     else:
@@ -235,15 +278,22 @@ def task_update(request, task_id):
     try:
         body_unicode = request.body.decode("utf-8")
         json_data = json.loads(body_unicode)
+        print(f'task update 1')
         task = get_object_or_404(TodoItem, id=task_id)
+        print(f'task = {task}')
         if not task.board.is_archived:
+            print('if not task.board.is_archived')
             task_name = json_data.get('taskName')
+            print(f'task_name = {task_name}')
             task_assignee_id = int(json_data.get('taskAssignee'))
+            print(f'task_assignee_id = {task_assignee_id}')
             task_status = json_data.get('taskStatus')
+            print(f'task_status = {task_status}')
             task_description = json_data.get('taskDescription')
             # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
             task.name = task_name
             task.status = task_status
+            print(f'task_status = {task_status}')
             task.description = task_description
             new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
             task.assignee = new_assignee
