@@ -16,6 +16,7 @@ def task_editor_required(view):
                 # Actually probably will never be used.. todo delete?
                 messages.error(request, error_msg)
                 return HttpResponseRedirect('/')
+
     return wrapped_view
 
 
@@ -30,7 +31,7 @@ def board_editor_required(model):
     def decorator(view):
         @wraps(view)
         def wrapped_view(request, *args, **kwargs):
-            board_id = kwargs.pop('board_id', None)
+            board_id = kwargs.pop('pk', None)
             if board_id is None:
                 raise ValueError("Board id not found in URL")
 
@@ -40,7 +41,9 @@ def board_editor_required(model):
                 return render(request, template_name='forbidden.html')
 
             return view(request, board_id, *args, **kwargs)
+
         return wrapped_view
+
     return decorator
 
 
@@ -60,5 +63,7 @@ def board_admin_required(model):
             else:
                 messages.error(request, "Not enough privileges. Please contact board administrator.")
                 return HttpResponseRedirect('/')
+
         return wrapped_view
+
     return decorator

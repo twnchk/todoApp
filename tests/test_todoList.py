@@ -153,6 +153,65 @@ class TodoListViewTest(TestCase):
         user.delete()
         test_board.delete()
 
+    def test_board_archived_backlog(self):
+        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
+        test_board_content_type = ContentType.objects.get_for_model(TodoList)
+
+        # Add all permissions
+        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
+        test_permissions_group.permissions.add(*test_board_admin_permissions)
+
+        test_board = TodoList.objects.create(title='test')
+        test_board.is_archived = True
+        test_board.allowed_groups.add(test_permissions_group)
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        user.groups.add(test_permissions_group)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        response = self.client.get(reverse('board_backlog', args=(test_board.id,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'board_backlog.html')
+
+        test_permissions_group.delete()
+        user.delete()
+        test_board.delete()
+
+    def test_board_archived_backlog_user_not_logged_in(self):
+        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
+        test_board_content_type = ContentType.objects.get_for_model(TodoList)
+
+        # Add all permissions
+        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
+        test_permissions_group.permissions.add(*test_board_admin_permissions)
+
+        test_board = TodoList.objects.create(title='test')
+        test_board.is_archived = True
+        test_board.allowed_groups.add(test_permissions_group)
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        user.groups.add(test_permissions_group)
+        self.client = Client()
+
+        response = self.client.get(reverse('board_backlog', args=(test_board.id,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'forbidden.html')
+
+        test_permissions_group.delete()
+        user.delete()
+        test_board.delete()
+
     def test_boards_list_view_user_logged_in(self):
         # Prepare dummy user object
         expected_username = "testUser321"

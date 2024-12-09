@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
-from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .mixins import LoginAndSuperUserRequiredMixin
 
@@ -30,7 +30,6 @@ class AllBoardsListView(LoginAndSuperUserRequiredMixin, ListView):
     model = TodoList
     context_object_name = 'boards'
     template_name = 'boards.html'
-    paginate_by = 25
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -44,7 +43,6 @@ class UserBoardsListView(LoginRequiredMixin, ListView):
     model = TodoList
     context_object_name = 'boards'
     template_name = 'boards.html'
-    paginate_by = 25
 
     def get_queryset(self):
         boards = super().get_queryset()
@@ -86,39 +84,30 @@ class BoardDetailView(LoginRequiredMixin, DetailView):
         return context
 
     def get_template_names(self):
-        template_name = super().get_template_names()
         board = self.get_object()
         if board.is_archived:
-            template_name = ['board_detail_archive.html']
-        return template_name
+            return ['board_detail_archive.html']
+        return [self.template_name]
 
 
-class BoardBacklogDetailView(BoardDetailView):
-    template_name = 'board_backlog.html'
-    # TODO: resolve a bug when trying to access backlog for archived board
+class BoardBacklogView(BoardDetailView):
+    def get_template_names(self):
+        return ['board_backlog.html']
 
 
-@board_editor_required(TodoList)
-def board_detail(request, board_id, template_name='board_detail.html'):
-    tasks = TodoItem.objects.filter(board=board_id)
-    board = TodoList.objects.get(id=board_id)
-    context = {
-        'tasks': tasks,
-        'board_id': board_id,
-        'board': board,
-    }
-    if template_name == 'board_backlog.html':
-        return render(request, template_name=template_name, context=context)
-    elif board.is_archived:
-        return render(request, template_name='board_detail_archive.html', context=context)
-    else:
-        return render(request, template_name='board_detail.html', context=context)
+class BoardCreateView(LoginRequiredMixin, CreateView):
+    model = TodoList
+    form_class = CreateBoardForm
+    template_name = "create_board.html"
 
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+        form = self.form_class
+        return render(request, self.template_name, context={'form': form})
 
-@login_required
-def board_create(request):
-    if request.method == 'POST':
-        form = CreateBoardForm(request.POST)
+    def post(self, request, *args, **kwargs):
+        # super().post(request, *args, **kwargs)
+        form = self.get_form()
         if form.is_valid():
             new_board_group_name = form.cleaned_data['title'] + ' admins'
             new_group, created = Group.objects.get_or_create(name=new_board_group_name)
@@ -139,34 +128,27 @@ def board_create(request):
                 return redirect('board_detail', pk=new_board.pk)
             else:
                 form.add_error(None, 'A group with this name already exists.')
-    else:
-        form = CreateBoardForm()
-
-    return render(request, template_name='create_board.html', context={'form': form})
+        return render(request, self.template_name, context={'form': form})
 
 
-@csrf_protect
-@require_POST
-@login_required
-def board_update(request, board_id):
-    if request.method == 'POST':
-        board = TodoList.objects.get(id=board_id)
-        if board:
-            body_unicode = request.body.decode("utf-8")
-            json_data = json.loads(body_unicode)
-            board_title = json_data.get('boardTitle')
-            board_description = json_data.get('boardDescription')
+class BoardUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Invalid request.'})
 
-            board.title = board_title
-            board.description = board_description
+        board = get_object_or_404(TodoList, pk=pk)
+        body_unicode = request.body.decode("utf-8")
+        json_data = json.loads(body_unicode)
+        board_title = json_data.get('boardTitle')
+        board_description = json_data.get('boardDescription')
 
-            with transaction.atomic():
-                board.save()
+        board.title = board_title
+        board.description = board_description
 
-            return JsonResponse({'success': True})
-        return JsonResponse({'success': False, 'error': 'Board was not found'})
+        with transaction.atomic():
+            board.save()
 
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+        return JsonResponse({'success': True, 'message': 'Board updated successfully.'})
 
 
 @csrf_protect
@@ -189,7 +171,7 @@ def board_close(request, board_id):
             task.save()
     board.is_archived = True
     board.save()
-    return redirect('board_detail', board_id=board_id)
+    return redirect('board_detail', pk=board_id)
 
 
 @login_required
@@ -198,7 +180,7 @@ def board_reopen(request, board_id):
     board = get_object_or_404(TodoList, id=board_id)
     board.is_archived = False
     board.save()
-    return redirect('board_detail', board_id=board_id)
+    return redirect('board_detail', pk=board_id)
 
 
 @login_required
