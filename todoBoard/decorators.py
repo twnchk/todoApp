@@ -51,9 +51,9 @@ def board_admin_required(model):
     def decorator(view):
         @wraps(view)
         def wrapped_view(request, *args, **kwargs):
-            board_id = kwargs.pop('board_id', None)
+            board_id = kwargs.pop('pk', None)
             if board_id is None:
-                raise ValueError("Board id not found in URL")
+                raise ValueError("Board id (pk) not found in URL")
 
             board = get_object_or_404(model, id=board_id)
             group_name = str(board.title + ' admins')

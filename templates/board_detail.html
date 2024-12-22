@@ -28,7 +28,7 @@
                     </a>
                     <!-- Modal -->
                     <div class="modal fade" id="closeConfirmModal" tabindex="-1" role="dialog"
-                         aria-labelledby="modalLabel" aria-hidden="true">
+                         aria-labelledby="modalLabel" aria-hidden="true" data-boardid="{{ board.id }}">
                         <div class="modal-dialog" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -139,7 +139,26 @@
                 <script>
                     function closeBoard() {
                         // Code to close the board
-                        window.location.href = "{% url 'board_close' board.id %}";
+                        var modal = $('#closeConfirmModal');
+                        var boardId = modal.data('boardid');
+
+                        var closeUrl = `/boards/${boardId}/close`;
+                        $.ajax({
+                            url: closeUrl,
+                            type: "POST",
+                            headers: { "X-CSRFToken": '{{ csrf_token }}' },  // Ensure CSRF token is included
+                            success: function(response) {
+                                if (response.success) {
+                                    // Refresh page or update UI
+                                    window.location.reload();
+                                } else {
+                                    console.error('Error:', response.message);
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error:', error);
+                            }
+                        });
                     }
 
                     $("#DN").css("text-decoration", "line-through");

@@ -1,4 +1,5 @@
 # TODO: refactor whole file to CBVs
+import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, Permission
@@ -6,18 +7,26 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
-import json
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.http import require_POST
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
+from django.urls import reverse_lazy
 
-from django.views.generic import TemplateView, ListView, DetailView, CreateView, View
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from .mixins import LoginAndSuperUserRequiredMixin
+# Views
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, View, DeleteView
 
+# Mixins
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .mixins import LoginAndSuperUserRequiredMixin, BoardAdminRequiredMixin, BoardEditorRequiredMixin
+
+# Models
 from .models import TodoList, TodoItem
 from users.models import CustomUser
+
+# Forms
 from .forms import CreateTaskForm, CreateBoardForm
+
+# Decorators
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from .decorators import task_editor_required, board_editor_required, board_admin_required
 
 
@@ -132,6 +141,10 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
 
 
 class BoardUpdateView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # Return some information if needed, or raise an error
+        return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
+
     def post(self, request, pk, *args, **kwargs):
         if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': 'Invalid request.'})
@@ -151,27 +164,34 @@ class BoardUpdateView(LoginRequiredMixin, View):
         return JsonResponse({'success': True, 'message': 'Board updated successfully.'})
 
 
-@csrf_protect
-@require_POST
-@login_required
-@board_admin_required(TodoList)
-def board_delete(request, board_id):
-    board = get_object_or_404(TodoList, id=board_id)
-    board.delete()
-    return JsonResponse({'success': True})
+class BoardDeleteView(BoardAdminRequiredMixin, DeleteView):
+    model = TodoList
+    success_url = reverse_lazy('boards_list')
+
+    def get(self, request, *args, **kwargs):
+        # Prevent accidental deletion through GET requests
+        return HttpResponseRedirect('/')
 
 
-@login_required
-@board_editor_required(TodoList)
-def board_close(request, board_id):
-    board = get_object_or_404(TodoList, id=board_id)
-    for task in board.todoitem_set.all():
-        if task.status != "DN":
-            task.status = "DN"
-            task.save()
-    board.is_archived = True
-    board.save()
-    return redirect('board_detail', pk=board_id)
+class BoardCloseView(BoardEditorRequiredMixin, View):
+    model = TodoList
+
+    def get(self, request, *args, **kwargs):
+        # Return some information if needed, or raise an error
+        return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
+
+    def post(self, request, *args, **kwargs):
+        board_id = kwargs.pop("pk", None)
+        board = get_object_or_404(TodoList, pk=board_id)
+
+        # Mark all tasks as done when board is closed
+        for task in board.todoitem_set.all():
+            if task.status != "DN":
+                task.status = "DN"
+                task.save()
+        board.is_archived = True
+        board.save()
+        return JsonResponse({'success': True, 'message': 'Board closed successfully.'})
 
 
 @login_required
