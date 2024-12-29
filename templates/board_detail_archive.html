@@ -136,7 +136,23 @@
                 {% endif %}
                 <script>
                     function openBoard() {
-                        window.location.href = "{% url 'board_reopen' board.id %}";
+                        const boardId = "{{ board.id }}";  // Ensure the board ID is available in the template
+                        const reopenUrl = "{% url 'board_reopen' board.id %}";
+
+                        fetch(reopenUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token
+                            }
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.reload();  // Reload the page or redirect to another page
+                            } else {
+                                console.error('Failed to reopen the board');
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
                     }
                 </script>
                 {% endblock %}

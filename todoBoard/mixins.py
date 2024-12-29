@@ -4,15 +4,6 @@ from django.http import HttpResponseRedirect
 from django.contrib import messages
 
 
-class LoginAndSuperUserRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        if not request.user.is_superuser:
-            return render(request, 'forbidden.html')
-
-        return response
-
-
 class BoardAdminRequiredMixin(LoginRequiredMixin):
     model = None  # always set in the view
 

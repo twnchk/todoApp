@@ -15,7 +15,7 @@ from django.views.generic import TemplateView, ListView, DetailView, CreateView,
 
 # Mixins
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .mixins import LoginAndSuperUserRequiredMixin, BoardAdminRequiredMixin, BoardEditorRequiredMixin
+from .mixins import BoardAdminRequiredMixin, BoardEditorRequiredMixin
 
 # Models
 from .models import TodoList, TodoItem
@@ -35,10 +35,15 @@ class IndexView(TemplateView):
 
 
 # Board views
-class AllBoardsListView(LoginAndSuperUserRequiredMixin, ListView):
+class AllBoardsListView(LoginRequiredMixin, ListView):
     model = TodoList
     context_object_name = 'boards'
     template_name = 'boards.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            return render(request, 'forbidden.html')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -46,6 +51,11 @@ class AllBoardsListView(LoginAndSuperUserRequiredMixin, ListView):
             board.show_delete_button = True
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_header'] = "All boards: "
+        return context
 
 
 class UserBoardsListView(LoginRequiredMixin, ListView):
@@ -61,6 +71,7 @@ class UserBoardsListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        context['page_header'] = f"{user} boards: "
         user_has_delete_perm = user.has_perm('todoBoard.can_delete_board') or user.is_superuser
         for board in context['boards']:
             if user.is_superuser:
@@ -69,6 +80,35 @@ class UserBoardsListView(LoginRequiredMixin, ListView):
                 user_group_ids = set(user.groups.values_list('id', flat=True))
                 allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
                 board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
+            else:
+                board.show_delete_button = False
+
+        return context
+
+
+class ArchivedBoardsList(LoginRequiredMixin, ListView):
+    model = TodoList
+    context_object_name = 'boards'
+    template_name = 'archived_boards.html'
+
+    def get_queryset(self):
+        boards = super().get_queryset()
+        user = self.request.user
+
+        for board in boards:
+            board.show_delete_button = True
+
+        if user.is_superuser:
+            return boards.filter(Q(is_archived=True))
+
+        return boards.filter(Q(allowed_groups__in=user.groups.all()) & Q(is_archived=True)).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        for board in context['boards']:
+            if user.is_superuser:
+                board.show_delete_button = True
             else:
                 board.show_delete_button = False
 
@@ -194,37 +234,15 @@ class BoardCloseView(BoardEditorRequiredMixin, View):
         return JsonResponse({'success': True, 'message': 'Board closed successfully.'})
 
 
-@login_required
-@board_editor_required(TodoList)
-def board_reopen(request, board_id):
-    board = get_object_or_404(TodoList, id=board_id)
-    board.is_archived = False
-    board.save()
-    return redirect('board_detail', pk=board_id)
+class BoardRepoenView(BoardEditorRequiredMixin, View):
+    model = TodoList
 
-
-@login_required
-def archived_boards_list(request):
-    user = request.user
-    boards = set()
-    for group in user.groups.all():
-        boards.update(group.allowed_boards.filter(is_archived=True))
-
-    user_has_delete_perm = ((user.is_authenticated and user.has_perm('todoBoard.can_delete_board'))
-                            or user.is_superuser)
-
-    for board in boards:
-        if user.is_superuser:
-            board.show_delete_button = True
-        elif user_has_delete_perm:
-            user_group_ids = set(user.groups.values_list('id', flat=True))
-            allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
-            board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
-        else:
-            board.show_delete_button = False
-
-    context = {'boards': boards}
-    return render(request, template_name='archived_boards.html', context=context)
+    def post(self, request, *args, **kwargs):
+        board_id = kwargs.pop("pk", None)
+        board = get_object_or_404(TodoList, pk=board_id)
+        board.is_archived = False
+        board.save()
+        return redirect('board_detail', pk=board_id)
 
 
 # Task views
