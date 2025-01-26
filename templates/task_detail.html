@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %} TODO Task {% endblock %}
 {% block content %}
+{% load static %}
 <div class="container rounded-container">
     {% if task %}
     <div class="d-flex d-flex align-items-center mb-2">
@@ -17,7 +18,7 @@
             {% endif %}
         </div>
     </div>
-    {% if task.high_priority is True %}
+    {% if task.high_priority %}
     <h3>
         <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
         <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
@@ -26,47 +27,59 @@
     <h3>
         <a href="{% url 'board_detail' task.board.id %}">
             {% if not task.board.is_archived %}
-            [{{ task.board }}]:
+                [{{ task.board }}]:
             {% else %}
-            [Closed: {{ task.board }}]:
+                [Closed: {{ task.board }}]:
             {% endif %}
         </a>
         <span id="taskName" contenteditable="false"> {{ task.name }}</span>
     </h3>
     {% endif %}
     <div class="assignee-info d-flex align-items-center">
-        <a href="{% url 'user_profile' task.author.profile.id %}">
-            <div>
-                Author: <span class="assignee-username">{{ task.author }}</span>
+        <div>
+            <strong>Author:</strong>
+            <a href="{% url 'user_profile' task.author.profile.id %}">
+                <span class="assignee-username">{{ task.author }}</span>
                 <img src="{{ task.author.profile.avatar.url }}" alt="Assignee Image" class="user-avatar mr-2">
-            </div>
-        </a>
-    </div>
-    <div class="assignee-info d-flex align-items-center">
-        {% if task.assignee %}
-        <a href="{% url 'user_profile' task.assignee.profile.id %}">
-            <div>
-                Assignee: <span id="taskAssignee" contenteditable="false" class="assignee-username">{{ task.assignee.username }}</span>
-                <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image" class="user-avatar mr-2">
-            </div>
-
-        </a>
-        {% else %}
-        <div class="d-flex align-items-center">
-            Assignee:
-            <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm ml-2" style="width: auto;"
-                    disabled>
-                {% for assignee in assignees %}
-                <option value="{{ assignee.pk }}" {% if task.assignee == assignee.id %}selected{% endif %}>
-                    {{ assignee }}
-                </option>
-                {% endfor %}
-            </select>
+            </a>
         </div>
-        {% endif %}
     </div>
+
+    <!--    Edit task details-->
     <div class="d-flex align-items-center">
-        Status:
+        <strong>Assignee:</strong>
+        <span id="assigneeText">
+            {% if task.assignee %}
+            <a href="{% url 'user_profile' task.assignee.profile.id %}">
+                <span class="assignee-username ml-2">{{ task.assignee.username }} </span>
+            </a>
+            {% else %}
+                Unassigned
+            {% endif %}
+        </span>
+
+        <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm" style="display: none;">
+            {% for assignee in assignees %}
+            <option value="{{ assignee.pk }}" data-avatar="{{ assignee.profile.avatar.url }}" {% if task.assignee == assignee.id %}selected{% endif %}>
+                {{ assignee }}
+            </option>
+            {% if forloop.last %}
+                <option value="unassigned" data-avatar="{% static 'defaults/default_avatar.png' %}">
+                    Unassigned
+                </option>
+            {% endif %}
+            {% endfor %}
+        </select>
+
+        <img id="assigneeAvatar"
+             src="{% if task.assignee %}{{ task.assignee.profile.avatar.url }}{% else %}{% static 'defaults/default_avatar.png' %}{% endif %}"
+             alt="Assignee Image"
+             class="user-avatar ml-2">
+
+    </div>
+
+    <div class="d-flex align-items-center">
+        <strong>Status:</strong>
         <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;"
                 disabled>
             {% for value, display_text in task.taskStatus %}
@@ -76,9 +89,13 @@
             {% endfor %}
         </select>
     </div>
-    <div>Created: {{ task.created_at }}</div>
+
     <div>
-        Description:
+        <strong>Created: </strong> {{ task.created_at }}
+    </div>
+
+    <div>
+        <strong>Description:</strong>
         <div id="taskDescription" class="task-description" contenteditable="false">
             {{ task.description|linebreaks }}
         </div>
@@ -87,13 +104,12 @@
     <button id="deleteBtn" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteConfirmModal"
             data-taskid="{{ task.id }}">Delete
     </button>
-    <!-- Modal structure -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog"
-         aria-labelledby="modalLabel" aria-hidden="true">
+    <!-- Modal for Delete Confirmation -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalLabel">Confirm</h5>
+                    <h5 class="modal-title" id="modalLabel">Confirm Deletion</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -103,7 +119,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete task</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete Task</button>
                 </div>
             </div>
         </div>
@@ -115,67 +131,99 @@
 </div>
 <script>
     $.ajaxSetup({
-            headers: { "X-CSRFToken": '{{ csrf_token }}' }
+        headers: { "X-CSRFToken": '{{ csrf_token }}' }
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var editBtn = document.getElementById('editBtn');
         var saveBtn = document.getElementById('saveBtn');
         var discardBtn = document.getElementById('discardBtn');
         var taskName = document.getElementById('taskName');
+        var assigneeText = document.getElementById('assigneeText');
         var taskAssignee = document.getElementById('taskAssignee');
+        var assigneeAvatar = document.getElementById('assigneeAvatar');
         var taskStatus = document.getElementById('taskStatus');
         var taskDescription = document.getElementById('taskDescription');
 
+        // Update the avatar image when the dropdown selection changes
+        taskAssignee.addEventListener("change", function () {
+            var selectedOption = taskAssignee.options[taskAssignee.selectedIndex];
+            var avatarUrl = selectedOption.getAttribute("data-avatar");
+            assigneeAvatar.src = avatarUrl || "{% static 'defaults/default_avatar.png' %}";
+        });
+
+        // Function to toggle editable state
         function toggleEditableState(isEditable) {
-            [taskName, taskAssignee, taskStatus, taskDescription].forEach(function(element) {
-                element.contentEditable = isEditable ? "true" : "false";
-                element.disabled = !isEditable;
-                element.classList.toggle('editable', isEditable);
-            });
+            if (isEditable) {
+                assigneeText.style.display = "none"; // Hide plain text
+                taskAssignee.style.display = "inline"; // Show dropdown
+                taskAssignee.style.width = "auto"; // Do not take 100% of content
+                [taskName, taskDescription].forEach((element) => {
+                    element.contentEditable = true;
+                });
+                taskStatus.disabled = false;
+            } else {
+                var selectedOption = taskAssignee.options[taskAssignee.selectedIndex];
+                var avatarUrl = selectedOption.getAttribute("data-avatar");
+
+                // Update plain text and avatar based on selected value
+                assigneeText.textContent = selectedOption.textContent.trim();
+                assigneeAvatar.src = avatarUrl || "{% static 'defaults/default_avatar.png' %}";
+
+                assigneeText.style.display = "inline"; // Show plain text
+                taskAssignee.style.display = "none"; // Hide dropdown
+
+                [taskName, taskDescription].forEach((element) => {
+                    element.contentEditable = false;
+                });
+                taskStatus.disabled = true;
+            }
         }
 
-        editBtn.onclick = function() {
+        // Edit button click
+        editBtn.onclick = function () {
             toggleEditableState(true);
             editBtn.style.display = 'none';
             saveBtn.style.display = 'inline';
             discardBtn.style.display = 'inline';
         };
 
-        discardBtn.onclick = function() {
+        // Discard button click
+        discardBtn.onclick = function () {
             toggleEditableState(false);
             editBtn.style.display = 'inline';
             saveBtn.style.display = 'none';
             discardBtn.style.display = 'none';
         };
 
-        saveBtn.onclick = function() {
+        // Save button click
+        saveBtn.onclick = function () {
             var jsonData = {
-                'taskName': taskName.textContent,
+                'taskName': taskName.textContent.trim(),
                 'taskAssignee': taskAssignee.value,
                 'taskStatus': taskStatus.value,
-                'taskDescription': taskDescription.textContent,
+                'taskDescription': taskDescription.textContent.trim(),
                 'csrfmiddlewaretoken': '{{ csrf_token }}'
             };
 
             $.ajax({
                 url: "{% url 'task_update' task.id %}",
                 method: "POST",
-                data: jsonData,
-                success: function(response) {
+                contentType: "application/json",
+                data: JSON.stringify(jsonData),
+                success: function (response) {
                     console.log('Success:', response);
                     toggleEditableState(false);
                     editBtn.style.display = 'inline';
                     saveBtn.style.display = 'none';
                     discardBtn.style.display = 'none';
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Error:', xhr.responseText);
                 }
             });
         };
     });
-
 
     // Delete object
     $('#deleteConfirmModal').on('show.bs.modal', function (event) {
@@ -186,7 +234,7 @@
         $('#confirmDelete').off('click');
 
         // Bind a new event
-        $('#confirmDelete').on('click', function() {
+        $('#confirmDelete').on('click', function () {
             deleteBoard(taskId);
         });
     });
@@ -196,16 +244,15 @@
             url: "{% url 'task_delete' task.id %}",
             type: "POST",
             headers: { "X-CSRFToken": '{{ csrf_token }}' },
-            success: function(response) {
+            success: function (response) {
                 // Refresh page on successful delete
-                window.location.href = '/boards/' + response.board_id
+                window.location.href = '/boards/' + response.board_id;
             },
-            error: function(error) {
+            error: function (error) {
                 console.error('Error:', error);
             }
         });
     }
-    });
 </script>
 
 {% endblock %}

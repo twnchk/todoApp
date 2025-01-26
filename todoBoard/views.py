@@ -325,15 +325,19 @@ def task_update(request, task_id):
 
         if not task.board.is_archived:
             task_name = json_data.get('taskName')
-            task_assignee_id = int(json_data.get('taskAssignee'))
+            task_assignee_data = json_data.get('taskAssignee')
+            if str(task_assignee_data) == 'unassigned':
+                task.assignee = None
+            else:
+                task_assignee_id = int(task_assignee_data)
+                new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
+                task.assignee = new_assignee
             task_status = json_data.get('taskStatus')
             task_description = json_data.get('taskDescription')
             # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
             task.name = task_name
             task.status = task_status
             task.description = task_description
-            new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
-            task.assignee = new_assignee
 
             with transaction.atomic():
                 task.save()
