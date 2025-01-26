@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 
 # Views
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, View, DeleteView
@@ -246,6 +246,29 @@ class BoardRepoenView(BoardEditorRequiredMixin, View):
 
 
 # Task views
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = TodoItem
+    form_class = CreateTaskForm
+    template_name = "create_task.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        board_id = self.kwargs.get("board_id")
+
+        kwargs.update({
+            'init_board_id': board_id,
+            'user_id': self.request.user.id,
+        })
+
+        return kwargs
+
+    def get_success_url(self):
+        board_id = self.kwargs.get('board_id')
+        if not board_id:
+            raise ValueError('ID not provided in the URL')
+        return reverse('board_detail', kwargs={'pk': board_id})
+
+
 @login_required
 def task_create(request, board_id):
     user = get_object_or_404(CustomUser, id=request.user.id)
@@ -298,22 +321,16 @@ def task_update(request, task_id):
     try:
         body_unicode = request.body.decode("utf-8")
         json_data = json.loads(body_unicode)
-        print(f'task update 1')
         task = get_object_or_404(TodoItem, id=task_id)
-        print(f'task = {task}')
+
         if not task.board.is_archived:
-            print('if not task.board.is_archived')
             task_name = json_data.get('taskName')
-            print(f'task_name = {task_name}')
             task_assignee_id = int(json_data.get('taskAssignee'))
-            print(f'task_assignee_id = {task_assignee_id}')
             task_status = json_data.get('taskStatus')
-            print(f'task_status = {task_status}')
             task_description = json_data.get('taskDescription')
             # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
             task.name = task_name
             task.status = task_status
-            print(f'task_status = {task_status}')
             task.description = task_description
             new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
             task.assignee = new_assignee

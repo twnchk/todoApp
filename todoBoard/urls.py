@@ -5,7 +5,7 @@ from .views import IndexView, AllBoardsListView, UserBoardsListView, ArchivedBoa
     BoardBacklogView, BoardCreateView, BoardUpdateView, BoardDeleteView, BoardCloseView, BoardRepoenView
 
 # Task views
-from .views import task_change_status, task_create, task_detail, task_update, task_delete
+from .views import TaskCreateView, task_change_status, task_create, task_detail, task_update, task_delete
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
@@ -21,7 +21,7 @@ urlpatterns = [
     path('boards/<int:pk>/close', BoardCloseView.as_view(), name='board_close'),
     path('boards/<int:pk>/open', BoardRepoenView.as_view(), name='board_reopen'),
     # Tasks
-    path('boards/<int:pk>/addTask/', task_create, name='task_create'),
+    path('boards/<int:board_id>/addTask/', TaskCreateView.as_view(), name='task_create'),
     path('changeTaskStatus/', task_change_status, name='task_change_status'),
     path('task/<int:task_id>', task_detail, name='task_detail'),
     path('taskUpdate/<int:task_id>', task_update, name='task_update'),
