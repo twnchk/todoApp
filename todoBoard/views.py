@@ -1,6 +1,7 @@
 # TODO: refactor whole file to CBVs
 import json
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,7 @@ from django.views.generic import TemplateView, ListView, DetailView, CreateView,
 
 # Mixins
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .mixins import BoardAdminRequiredMixin, BoardEditorRequiredMixin
+from .mixins import BoardAdminRequiredMixin, BoardEditorRequiredMixin, TaskEditorRequiredMixin
 
 # Models
 from .models import TodoList, TodoItem
@@ -27,7 +28,7 @@ from .forms import CreateTaskForm, CreateBoardForm
 # Decorators
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
-from .decorators import task_editor_required, board_editor_required, board_admin_required
+from .decorators import task_editor_required
 
 
 class IndexView(TemplateView):
@@ -155,7 +156,6 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
         return render(request, self.template_name, context={'form': form})
 
     def post(self, request, *args, **kwargs):
-        # super().post(request, *args, **kwargs)
         form = self.get_form()
         if form.is_valid():
             new_board_group_name = form.cleaned_data['title'] + ' admins'
@@ -182,7 +182,6 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
 
 class BoardUpdateView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        # Return some information if needed, or raise an error
         return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
 
     def post(self, request, pk, *args, **kwargs):
@@ -217,7 +216,6 @@ class BoardCloseView(BoardEditorRequiredMixin, View):
     model = TodoList
 
     def get(self, request, *args, **kwargs):
-        # Return some information if needed, or raise an error
         return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
 
     def post(self, request, *args, **kwargs):
@@ -268,21 +266,29 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
             raise ValueError('ID not provided in the URL')
         return reverse('board_detail', kwargs={'pk': board_id})
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        task_name = form.cleaned_data['name']
+        messages.success(self.request, f'Task "{task_name}" has been created.')
+        return response
 
-@login_required
-def task_create(request, board_id):
-    user = get_object_or_404(CustomUser, id=request.user.id)
-    if request.method == 'POST':
-        form = CreateTaskForm(request.POST, init_board_id=board_id, user_id=user.id)
-        if form.is_valid():
-            new_task = form.save(commit=False)
-            new_task.save()
-            return redirect('board_detail', board_id=board_id)
-    else:
-        form = CreateTaskForm(init_board_id=board_id, user_id=user.id)
 
-    return render(request, template_name='create_task.html', context={'form': form})
+class TaskChangeStatusView(TaskEditorRequiredMixin, UpdateView):
+    model = TodoItem
 
+    def post(self, request, *args, **kwargs):
+        task_id = request.POST.get("task_id")
+        new_status = request.POST.get("new_status")
+        task = get_object_or_404(TodoItem, id=task_id)
+        if not task.board.is_archived:
+            task.status = new_status
+            with transaction.atomic():
+                task.save()
+
+        return JsonResponse({'success': True})
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
 
 @csrf_protect
 @login_required

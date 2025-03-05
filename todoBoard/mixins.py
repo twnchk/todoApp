@@ -2,10 +2,24 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 
 
-class BoardAdminRequiredMixin(LoginRequiredMixin):
+class TaskEditorRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
     model = None  # always set in the view
+    success_message = None
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.has_perm('todoBoard.can_edit_task') or request.user.is_superuser:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.error(request, "You don't have permissions to edit tasks. Please contact board administrator.")
+            return HttpResponseRedirect('/')
+
+
+class BoardAdminRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
+    model = None  # always set in the view
+    success_message = None
 
     def dispatch(self, request, *args, **kwargs):
         board = get_board_from_kwargs(self.model, **kwargs)
