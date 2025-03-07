@@ -207,7 +207,7 @@
             };
 
             $.ajax({
-                url: "{% url 'task_update' task.id %}",
+                url: "{% url 'task_update' task.pk %}",
                 method: "POST",
                 contentType: "application/json",
                 data: JSON.stringify(jsonData),

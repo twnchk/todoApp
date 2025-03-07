@@ -56,3 +56,10 @@ class TodoItem(models.Model):
 
     def __str__(self):
         return self.name
+
+    def is_user_allowed(self, user):
+        if user.is_superuser:
+            return True
+        user_group_ids = set(user.groups.values_list('id', flat=True))
+        allowed_group_ids = set(self.board.allowed_groups.all().values_list('id', flat=True))
+        return bool(user_group_ids.intersection(allowed_group_ids))

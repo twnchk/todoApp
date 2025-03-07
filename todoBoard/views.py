@@ -1,8 +1,6 @@
-# TODO: refactor whole file to CBVs
 import json
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -24,11 +22,6 @@ from users.models import CustomUser
 
 # Forms
 from .forms import CreateTaskForm, CreateBoardForm
-
-# Decorators
-from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.http import require_POST
-from .decorators import task_editor_required
 
 
 class IndexView(TemplateView):
@@ -290,81 +283,83 @@ class TaskChangeStatusView(TaskEditorRequiredMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
 
-@csrf_protect
-@login_required
-@task_editor_required
-def task_change_status(request):
-    if request.method == 'POST':
-        task_id = request.POST.get("task_id")
-        new_status = request.POST.get("new_status")
-        task = get_object_or_404(TodoItem, id=task_id)
-        if not task.board.is_archived:
-            task.status = new_status
-            with transaction.atomic():
-                task.save()
 
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+class TaskDetailView(LoginRequiredMixin, DetailView):
+    model = TodoItem
+    context_object_name = 'task'
+    template_name = 'task_detail.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        task = self.get_object()
+        if not task.is_user_allowed(request.user):
+            messages.warning(self.request, f'That task does not exist or you are not allowed to see it.')
+            return redirect('boards_list')
+        return response
 
-def task_detail(request, task_id):
-    task = get_object_or_404(TodoItem, id=task_id)
-    allowed_group_ids = task.board.allowed_groups.values_list('id', flat=True)
-    assignees = CustomUser.objects.filter(groups__id__in=allowed_group_ids).distinct()
-    context = {
-        'task': task,
-        'assignees': assignees,
-    }
-
-    return render(request, template_name='task_detail.html', context=context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        allowed_group_ids = self.get_object().board.allowed_groups.values_list('id', flat=True)
+        assignees = CustomUser.objects.filter(groups__id__in=allowed_group_ids).distinct()
+        context['assignees'] = assignees
+        return context
 
 
-@csrf_protect
-@require_POST
-@login_required
-@task_editor_required
-def task_update(request, task_id):
-    try:
-        body_unicode = request.body.decode("utf-8")
-        json_data = json.loads(body_unicode)
-        task = get_object_or_404(TodoItem, id=task_id)
+class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
+    model = TodoItem
 
-        if not task.board.is_archived:
-            task_name = json_data.get('taskName')
-            task_assignee_data = json_data.get('taskAssignee')
-            if str(task_assignee_data) == 'unassigned':
-                task.assignee = None
+    def set_task_assignee(self, task, task_assignee_data):
+        if str(task_assignee_data) == 'unassigned':
+            task.assignee = None
+        else:
+            task_assignee_id = int(task_assignee_data)
+            new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
+            task.assignee = new_assignee
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
+
+    def post(self, request, *args, **kwargs):
+        task = self.get_object()
+        try:
+            body_unicode = request.body.decode("utf-8")
+            json_data = json.loads(body_unicode)
+            if not task.board.is_archived:
+                task_name = json_data.get('taskName')
+                task_assignee = json_data.get('taskAssignee')
+                self.set_task_assignee(task, task_assignee)
+
+                task_status = json_data.get('taskStatus')
+                task_description = json_data.get('taskDescription')
+
+                # Update task data
+                if task.name != task_name or task.status != task_status or task.description != task_description:
+                    task.name = task_name
+                    task.status = task_status
+                    task.description = task_description
+
+                    with transaction.atomic():
+                        task.save()
+
+                return JsonResponse({'success': True, 'message': 'Task updated successfully.'})
             else:
-                task_assignee_id = int(task_assignee_data)
-                new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
-                task.assignee = new_assignee
-            task_status = json_data.get('taskStatus')
-            task_description = json_data.get('taskDescription')
-            # TODO: add check whether the data has changed <- shouldn't this be done on frontend?
-            task.name = task_name
-            task.status = task_status
-            task.description = task_description
+                messages.warning(self.request, f'You cannot update tasks in archived boards.')
+                return JsonResponse({'success': False, 'message': 'Cannot update task.'})
 
-            with transaction.atomic():
-                task.save()
-
-        return JsonResponse({'success': True})
-    except TodoItem.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task not found'})
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON format'})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON format'})
 
 
-@csrf_protect
-@require_POST
-@login_required
-@task_editor_required
-def task_delete(request, task_id):
-    try:
-        task = TodoItem.objects.get(id=task_id)
+class TaskDeleteView(TaskEditorRequiredMixin, DeleteView):
+    model = TodoItem
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
+
+    def post(self, request, *args, **kwargs):
+        task = self.get_object()
+        task_name = task.name
         board_id = task.board.id
         task.delete()
-
-        return JsonResponse({'success': True, 'board_id': board_id})
-    except TodoItem.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task not found'})
+        messages.info(self.request, f'Task {task_name} has been deleted')
+        return JsonResponse({'success': True, 'message': f'Task {task_name} has been deleted', 'board_id': board_id})
