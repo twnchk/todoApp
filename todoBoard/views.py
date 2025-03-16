@@ -66,16 +66,9 @@ class UserBoardsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['page_header'] = f"{user} boards: "
-        user_has_delete_perm = user.has_perm('todoBoard.can_delete_board') or user.is_superuser
+
         for board in context['boards']:
-            if user.is_superuser:
-                board.show_delete_button = True
-            elif user_has_delete_perm:
-                user_group_ids = set(user.groups.values_list('id', flat=True))
-                allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
-                board.show_delete_button = bool(set(user_group_ids) & set(allowed_group_ids))
-            else:
-                board.show_delete_button = False
+            board.show_delete_button = board.show_delete_button(user)
 
         return context
 
@@ -90,7 +83,7 @@ class ArchivedBoardsList(LoginRequiredMixin, ListView):
         user = self.request.user
 
         for board in boards:
-            board.show_delete_button = True
+            board.show_delete_button = board.show_delete_button(user)
 
         if user.is_superuser:
             return boards.filter(Q(is_archived=True))
@@ -100,11 +93,9 @@ class ArchivedBoardsList(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+
         for board in context['boards']:
-            if user.is_superuser:
-                board.show_delete_button = True
-            else:
-                board.show_delete_button = False
+            board.show_delete_button = board.show_delete_button(user)
 
         return context
 
@@ -360,6 +351,8 @@ class TaskDeleteView(TaskEditorRequiredMixin, DeleteView):
         task = self.get_object()
         task_name = task.name
         board_id = task.board.id
+
         task.delete()
         messages.info(self.request, f'Task {task_name} has been deleted')
+
         return JsonResponse({'success': True, 'message': f'Task {task_name} has been deleted', 'board_id': board_id})

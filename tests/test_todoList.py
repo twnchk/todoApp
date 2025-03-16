@@ -38,10 +38,78 @@ class TodoListTest(TestCase):
         # Cleanup
         test_object.delete()
 
-    def test_doNotCreateTodoItemWithoutTitle(self):
+    def test_do_not_create_todolist_without_title(self):
         with self.assertRaises(IntegrityError):
             TodoList.objects.create(title=None, description=None)
 
+    def test_show_delete_button_user_is_superuser(self):
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_superuser(expected_username, expected_email, expected_password)
+
+        # Create test object
+        test_object = TodoList.objects.create(title='test', description=None)
+
+        self.assertTrue(test_object.show_delete_button(user))
+
+    def test_show_delete_button_user_is_in_allowed_group(self):
+        """
+        Verify that show_delete_button returns true for user that is in board group
+        """
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+
+        # Create test object
+        test_object = TodoList.objects.create(title='test', description=None)
+
+        test_permissions_group, _ = Group.objects.get_or_create(name=f'Board {test_object.title} Admin')
+        test_board_content_type = ContentType.objects.get_for_model(TodoList)
+
+        # Add all permissions
+        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
+        test_permissions_group.permissions.add(*test_board_admin_permissions)
+
+        test_object.allowed_groups.add(test_permissions_group)
+        user.groups.add(test_permissions_group)
+
+        self.assertTrue(test_object.show_delete_button(user))
+
+
+    def test_show_delete_button_user_not_in_allowed_group(self):
+        """
+        Verify that show_delete_button returns false for user that is NOT in board group
+        """
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+
+        # Create test object
+        test_object = TodoList.objects.create(title='test', description=None)
+
+        # Do not add any permissions to user or test_object
+        self.assertFalse(test_object.show_delete_button(user))
+
+    def test_is_user_allowed_for_superuser(self):
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_superuser(expected_username, expected_email, expected_password)
+
+        # Create test object
+        test_object = TodoList.objects.create(title='test', description=None)
+
+        # Do not add any permissions to user or test_object
+        self.assertTrue(test_object.is_user_allowed(user))
 
 class TodoListViewTest(TestCase):
     def test_board_detail_user_not_logged_in(self):
@@ -258,3 +326,55 @@ class TodoListViewTest(TestCase):
         self.assertRedirects(response, '/boards/1')
 
         user.delete()
+
+    def test_all_boards_view(self):
+        """
+        Test that all boards can be displayed for superuser
+        """
+
+        test_board = TodoList.objects.create(title='test')
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+
+        user = CustomUser.objects.create_superuser(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        response = self.client.get(reverse('all_boards_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'boards.html')
+        self.assertTrue(user.is_superuser)
+
+        user.delete()
+        test_board.delete()
+
+    def test_all_boards_view_user_is_not_admin(self):
+        """
+        Test that all boards can be displayed for superuser
+        """
+
+        test_board = TodoList.objects.create(title='test')
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        response = self.client.get(reverse('all_boards_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'forbidden.html')
+        self.assertFalse(user.is_superuser)
+
+        user.delete()
+        test_board.delete()
+

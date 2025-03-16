@@ -17,9 +17,8 @@ class TaskEditorRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
             return HttpResponseRedirect('/')
 
 
-class BoardAdminRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
+class BoardAdminRequiredMixin(LoginRequiredMixin):
     model = None  # always set in the view
-    success_message = None
 
     def dispatch(self, request, *args, **kwargs):
         board = get_board_from_kwargs(self.model, **kwargs)
