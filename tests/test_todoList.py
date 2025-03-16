@@ -281,6 +281,8 @@ class TodoListViewTest(TestCase):
         test_board.delete()
 
     def test_boards_list_view_user_logged_in(self):
+        test_board = TodoList.objects.create(title='test')
+
         # Prepare dummy user object
         expected_username = "testUser321"
         expected_password = "testing123456"
@@ -290,11 +292,13 @@ class TodoListViewTest(TestCase):
 
         login = self.client.login(username=expected_username, password=expected_password)
         self.assertTrue(login)
+
         response = self.client.get(reverse('boards_list'))
         self.assertTemplateUsed(response, 'boards.html')
         self.assertEqual(response.status_code, 200)
 
         user.delete()
+        test_board.delete()
 
     def test_board_create_new_group_created(self):
         # Prepare dummy user object
@@ -327,7 +331,7 @@ class TodoListViewTest(TestCase):
 
         user.delete()
 
-    def test_all_boards_view(self):
+    def test_all_boards_view_user_is_admin(self):
         """
         Test that all boards can be displayed for superuser
         """
@@ -374,6 +378,60 @@ class TodoListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'forbidden.html')
         self.assertFalse(user.is_superuser)
+
+        user.delete()
+        test_board.delete()
+
+    def test_archived_boards_list_view_user_is_not_admin(self):
+        """
+        Test that all boards can be displayed for superuser
+        """
+
+        test_board = TodoList.objects.create(title='test', is_archived=True)
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_user(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        response = self.client.get(reverse('archived_boards'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'archived_boards.html')
+
+        # Assert that context boards has no elements if user is not superuser
+        self.assertEqual(len(response.context['boards']), 0)
+
+        user.delete()
+        test_board.delete()
+
+    def test_archived_boards_list_view_user_is_admin(self):
+        """
+        Test that all boards can be displayed for superuser
+        """
+
+        test_board = TodoList.objects.create(title='test', is_archived=True)
+
+        # Prepare dummy user object
+        expected_username = "testUser321"
+        expected_password = "testing123456"
+        expected_email = "test@example.com"
+        user = CustomUser.objects.create_superuser(expected_username, expected_email, expected_password)
+        self.client = Client()
+
+        login = self.client.login(username=expected_username, password=expected_password)
+        self.assertTrue(login)
+
+        response = self.client.get(reverse('archived_boards'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'archived_boards.html')
+
+        # Assert that context boards has elements if user is superuser
+        self.assertEqual(len(response.context['boards']), 1)
 
         user.delete()
         test_board.delete()

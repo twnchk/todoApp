@@ -42,7 +42,7 @@ class AllBoardsListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         for board in queryset:
-            board.show_delete_button = True
+            board.show_delete_button = board.show_delete_button(self.request.user)
 
         return queryset
 
