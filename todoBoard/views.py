@@ -136,7 +136,7 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
-        form = self.form_class
+        form = self.form_class() # Has to be instance! self.form_class would cause hard to identify bugs!
         return render(request, self.template_name, context={'form': form})
 
     def post(self, request, *args, **kwargs):
