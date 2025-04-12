@@ -1,10 +1,11 @@
 from json import dumps as json_dumps
+from pydoc import describe
 
 from django.test import TestCase, Client
 from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
-from todoBoard.models import TodoList
+from todoBoard.models import TodoList, TodoItem
 from users.models import CustomUser
 
 
@@ -332,6 +333,35 @@ class TodoListViewTest(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json()['error'], 'GET method is not allowed for this action')
 
-    def test_board_close_view_user_is_editor(self):
-        # TODO
-        pass
+    def test_board_close_view_user_is_superuser(self):
+        self.user = self.create_test_superuser()
+        self.login_user(is_superuser=True)
+
+        # Create dummy task for coverage reasons
+        task = TodoItem.objects.create(name='Foo', description='', author=self.user, board=self.test_object)
+        self.assertEqual(task.status, ("NS", "Not started"))
+
+        view_url = reverse('board_close', kwargs={'pk': f'{self.test_object.pk}'})
+        response = self.client.post(view_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
+        self.assertEqual(response.json()['message'], 'Board closed successfully.')
+
+        # Refresh the object from DB
+        task.refresh_from_db()
+        # Verify task status was changed to done upon closing the board
+        self.assertEqual(task.status, "DN")
+
+    def test_board_reopen_view_user_is_superuser(self):
+        self.user = self.create_test_superuser()
+        self.login_user(is_superuser=True)
+
+        view_url = reverse('board_reopen', kwargs={'pk': f'{self.test_object.pk}'})
+        response = self.client.post(view_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f'/boards/{self.test_object.pk}')
+
+
+
