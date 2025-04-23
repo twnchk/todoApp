@@ -1,5 +1,4 @@
 from json import dumps as json_dumps
-from pydoc import describe
 
 from django.test import TestCase, Client
 from django.contrib.auth.models import Group, Permission

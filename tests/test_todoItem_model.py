@@ -6,9 +6,6 @@ from todoBoard.models import TodoItem
 from todoBoard.models import TodoList
 from users.models import CustomUser
 
-
-# TODO: finish tests
-
 class TodoItemTest(TestCase):
     def test_is_user_allowed_for_superuser(self):
         # Prepare dummy user object

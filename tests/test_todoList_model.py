@@ -43,6 +43,7 @@ class TodoListModelTest(TestCase):
         self.user.groups.add(test_permissions_group)
 
         self.assertTrue(self.test_object.show_delete_button(self.user))
+        self.assertEqual(str(self.test_object), 'test_board')
 
     def test_show_delete_button_user_not_in_allowed_group(self):
         """
