@@ -7,6 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from todoBoard.models import TodoList, TodoItem
 from users.models import CustomUser
 
+from django.contrib.messages import get_messages
+
 
 class TodoListViewTest(TestCase):
     def setUp(self):
@@ -20,14 +22,25 @@ class TodoListViewTest(TestCase):
         self.client = Client()
 
     def create_test_superuser(self):
-        return CustomUser.objects.create_superuser(username=self.admin_username,
-                                                   email='test@example.com',
-                                                   password=self.password)
+        self.user = CustomUser.objects.create_superuser(username=self.admin_username,
+                                                        email='test@example.com',
+                                                        password=self.password)
 
     def login_user(self, is_superuser=False):
         login = self.client.login(username=self.admin_username if is_superuser else self.username,
                                   password=self.password)
         self.assertTrue(login)
+
+    def add_user_permissions(self):
+        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
+        test_board_content_type = ContentType.objects.get_for_model(TodoList)
+
+        # Add all permissions
+        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
+        test_permissions_group.permissions.add(*test_board_admin_permissions)
+
+        self.test_object.allowed_groups.add(test_permissions_group)
+        self.user.groups.add(test_permissions_group)
 
     def test_board_detail_user_not_logged_in(self):
         """
@@ -42,18 +55,8 @@ class TodoListViewTest(TestCase):
         Test that board can be displayed if user belong to group
         with required permissions
         """
-        test_permissions_group, _ = Group.objects.get_or_create(name=f'Board {self.test_object.title} Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
-
-        self.test_object.allowed_groups.add(test_permissions_group)
-
-        self.user.groups.add(test_permissions_group)
-
         self.login_user()
+        self.add_user_permissions()
 
         response = self.client.get(reverse('board_detail', args=(self.test_object.id,)))
         self.assertEqual(response.status_code, 200)
@@ -74,57 +77,30 @@ class TodoListViewTest(TestCase):
         self.assertTemplateUsed(response, 'forbidden.html')
 
     def test_board_detail_backlog(self):
-        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
-
-        self.test_object.allowed_groups.add(test_permissions_group)
-
-        self.user.groups.add(test_permissions_group)
-
         self.login_user()
+        self.add_user_permissions()
 
         response = self.client.get(reverse('board_backlog', args=(self.test_object.id,)))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'board_backlog.html')
 
     def test_board_detail_archived(self):
-        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
-
         # Archive the board
         self.test_object.is_archived = True
-        self.test_object.allowed_groups.add(test_permissions_group)
         self.test_object.save()
 
-        self.user.groups.add(test_permissions_group)
-
         self.login_user()
+        self.add_user_permissions()
 
         response = self.client.get(reverse('board_detail', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'board_detail_archive.html')
 
     def test_board_archived_backlog(self):
-        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
+        self.add_user_permissions()
 
         self.test_object.is_archived = True
-        self.test_object.allowed_groups.add(test_permissions_group)
         self.test_object.save()
-
-        self.user.groups.add(test_permissions_group)
 
         self.login_user()
 
@@ -133,18 +109,10 @@ class TodoListViewTest(TestCase):
         self.assertTemplateUsed(response, 'board_backlog.html')
 
     def test_board_archived_backlog_user_not_logged_in(self):
-        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
-
         self.test_object.is_archived = True
-        self.test_object.allowed_groups.add(test_permissions_group)
         self.test_object.save()
 
-        self.user.groups.add(test_permissions_group)
+        self.add_user_permissions()
 
         response = self.client.get(reverse('board_backlog', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 200)
@@ -162,7 +130,7 @@ class TodoListViewTest(TestCase):
         Test that all boards can be displayed for superuser
         """
 
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
 
         self.login_user(is_superuser=True)
 
@@ -211,7 +179,7 @@ class TodoListViewTest(TestCase):
         self.test_object.is_archived = True
         self.test_object.save()
 
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
         self.assertTrue(self.user.is_superuser)
 
         self.login_user(is_superuser=True)
@@ -314,16 +282,23 @@ class TodoListViewTest(TestCase):
         self.assertNotEqual(self.test_object.description, 'lorem ipsum')
 
     def test_board_delete_view_get_method(self):
-        self.user = self.create_test_superuser()
-        self.assertTrue(self.user.is_superuser)
-
+        self.create_test_superuser()
         self.login_user(is_superuser=True)
 
         response = self.client.get(reverse('board_delete', kwargs={'pk': f'{self.test_object.pk}'}))
         self.assertEqual(response.status_code, 302)
 
+    def test_board_delete_view_user_not_board_admin(self):
+        self.login_user()
+
+        response = self.client.post(reverse('board_delete', kwargs={'pk': f'{self.test_object.pk}'}))
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]),
+                         'Not enough privileges. Please contact board administrator.')
+
     def test_board_close_view_get_method(self):
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
         self.assertTrue(self.user.is_superuser)
 
         self.login_user(is_superuser=True)
@@ -333,7 +308,7 @@ class TodoListViewTest(TestCase):
         self.assertEqual(response.json()['error'], 'GET method is not allowed for this action')
 
     def test_board_close_view_user_is_superuser(self):
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
         self.login_user(is_superuser=True)
 
         # Create dummy task for coverage reasons
@@ -352,8 +327,20 @@ class TodoListViewTest(TestCase):
         # Verify task status was changed to done upon closing the board
         self.assertEqual(task.status, "DN")
 
+    def test_board_close_view_user_not_editor(self):
+        self.login_user()
+
+        view_url = reverse('board_close', kwargs={'pk': f'{self.test_object.pk}'})
+        response = self.client.post(view_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed('forbidden.html')
+        # self.assertEqual(response.json()['success'], True)
+        # self.assertEqual(response.json()['message'], 'Board closed successfully.')
+
+
     def test_board_reopen_view_user_is_superuser(self):
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
         self.login_user(is_superuser=True)
 
         view_url = reverse('board_reopen', kwargs={'pk': f'{self.test_object.pk}'})
@@ -361,6 +348,3 @@ class TodoListViewTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, f'/boards/{self.test_object.pk}')
-
-
-

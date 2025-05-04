@@ -30,9 +30,9 @@ class TodoItemViewTest(TestCase):
                                                    board=self.board)
 
     def create_test_superuser(self):
-        return CustomUser.objects.create_superuser(username=self.admin_username,
-                                                   email='test@example.com',
-                                                   password=self.password)
+        self.user = CustomUser.objects.create_superuser(username=self.admin_username,
+                                                        email='test@example.com',
+                                                        password=self.password)
 
     def login_user(self, is_superuser=False):
         login = self.client.login(username=self.admin_username if is_superuser else self.username,
@@ -79,11 +79,11 @@ class TodoItemViewTest(TestCase):
         """
         self.login_user()
         request = RequestFactory().get('/task_create/')
-        request.user = self.user # Mock logged in user
+        request.user = self.user  # Mock logged in user
 
         view = TaskCreateView()
         view.request = request
-        view.kwargs = {} # Do NOT pass board_id to the url
+        view.kwargs = {}  # Do NOT pass board_id to the url
 
         with self.assertRaises(ValueError) as context:
             view.get_success_url()
@@ -202,7 +202,6 @@ class TodoItemViewTest(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json()['error'], 'GET method is not allowed for this action')
 
-
     def test_task_update_view(self):
         self.login_user()
         self.add_user_permissions()
@@ -279,5 +278,3 @@ class TodoItemViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['success'], False)
         self.assertEqual(response.json()['error'], 'Invalid JSON format')
-
-

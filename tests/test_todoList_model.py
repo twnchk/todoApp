@@ -15,18 +15,18 @@ class TodoListModelTest(TestCase):
                                                    password='testing123456')
 
     def create_test_superuser(self):
-        return CustomUser.objects.create_superuser(username='testSuperUser321',
-                                                   email='test@example.com',
-                                                   password='testing123456')
+        self.user = CustomUser.objects.create_superuser(username='testSuperUser321',
+                                                        email='test@example.com',
+                                                        password='testing123456')
 
     def test_do_not_create_todolist_without_title(self):
         with self.assertRaises(IntegrityError):
             TodoList.objects.create(title=None, description=None)
 
     def test_show_delete_button_user_is_superuser(self):
-        user = self.create_test_superuser()
+        self.create_test_superuser()
 
-        self.assertTrue(self.test_object.show_delete_button(user))
+        self.assertTrue(self.test_object.show_delete_button(self.user))
 
     def test_show_delete_button_user_is_in_allowed_group(self):
         """
@@ -55,5 +55,5 @@ class TodoListModelTest(TestCase):
 
     def test_is_user_allowed_for_superuser(self):
         # Do not add any permissions to user or test_object
-        self.user = self.create_test_superuser()
+        self.create_test_superuser()
         self.assertTrue(self.test_object.is_user_allowed(self.user))
