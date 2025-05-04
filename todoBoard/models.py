@@ -58,7 +58,7 @@ class TodoItem(models.Model):
                                  related_name="assignee")
     board = models.ForeignKey(TodoList, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=15, choices=taskStatus, default=taskStatus[0])
+    status = models.CharField(max_length=15, choices=taskStatus, default=taskStatus[0][0])
     high_priority = models.BooleanField(default=False)
 
     def __str__(self):

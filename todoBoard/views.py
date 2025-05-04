@@ -136,7 +136,7 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
-        form = self.form_class() # Has to be instance! self.form_class would cause hard to identify bugs!
+        form = self.form_class()  # Has to be instance! self.form_class would cause hard to identify bugs!
         return render(request, self.template_name, context={'form': form})
 
     def post(self, request, *args, **kwargs):
@@ -324,7 +324,9 @@ class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
                 task_description = json_data.get('taskDescription')
 
                 # Update task data
-                if task.name != task_name or task.status != task_status or task.description != task_description:
+                if (task.name != task_name or task.status != task_status or
+                    task.description != task_description or str(task.assignee.id) != str(task_assignee)):
+
                     task.name = task_name
                     task.status = task_status
                     task.description = task_description

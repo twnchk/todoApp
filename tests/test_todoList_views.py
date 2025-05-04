@@ -313,7 +313,7 @@ class TodoListViewTest(TestCase):
 
         # Create dummy task for coverage reasons
         task = TodoItem.objects.create(name='Foo', description='', author=self.user, board=self.test_object)
-        self.assertEqual(task.status, ("NS", "Not started"))
+        self.assertEqual(task.status, 'NS')
 
         view_url = reverse('board_close', kwargs={'pk': f'{self.test_object.pk}'})
         response = self.client.post(view_url)
@@ -325,7 +325,7 @@ class TodoListViewTest(TestCase):
         # Refresh the object from DB
         task.refresh_from_db()
         # Verify task status was changed to done upon closing the board
-        self.assertEqual(task.status, "DN")
+        self.assertEqual(task.status, 'DN')
 
     def test_board_close_view_user_not_editor(self):
         self.login_user()

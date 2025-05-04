@@ -206,20 +206,35 @@ class TodoItemViewTest(TestCase):
         self.login_user()
         self.add_user_permissions()
 
+        self.assertEqual(self.test_object.name, 'test_task')
+        self.assertEqual(self.test_object.description, 'task_description')
+        self.assertEqual(self.test_object.assignee, None)
+        self.assertEqual(self.test_object.status, 'NS')
+
         form_url = reverse('task_update', kwargs={'pk': f'{self.test_object.pk}'})
+
+        new_task_name = 'updated task name'
+        new_task_description = 'updated task description'
         form_data = {
-            'taskName': 'updated task name',
+            'taskName': new_task_name,
             'taskAssignee': f"{self.user.pk}",
-            'taskStatus': 'NS',
-            'taskDescription': 'updated task description'
+            'taskStatus': 'DN',
+            'taskDescription': new_task_description
         }
 
         response = self.client.post(path=form_url, data=json_dumps(form_data), content_type='application/json',
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
+        self.test_object.refresh_from_db()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['success'], True)
         self.assertEqual(response.json()['message'], 'Task updated successfully.')
+
+        self.assertEqual(self.test_object.name, new_task_name)
+        self.assertEqual(self.test_object.description, new_task_description)
+        self.assertEqual(self.test_object.assignee, self.user)
+        self.assertEqual(self.test_object.status, 'DN')
 
     def test_task_update_view_unassigned_user(self):
         self.login_user()
