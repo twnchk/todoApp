@@ -17,6 +17,7 @@ class ProfileModelTest(TestCase):
         self.assertEqual(self.user.username, self.expected_username)
         self.assertEqual(self.user.email, self.expected_email)
         self.assertTrue(self.user.check_password(self.expected_password))
+        self.assertEqual(str(self.user), self.user.username)
 
     def test_profile_creation(self):
         profile = Profile.objects.get(user=self.user)
@@ -47,6 +48,8 @@ class ProfileViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user_profile.html')
         self.assertEqual(response.context['user'], self.user)
+        self.assertEqual(str(self.user.profile), self.user.username)
+        self.assertEqual(repr(self.user), 'User(username=testUser321)')
 
     def test_user_profile_login_not_successful(self):
         login = self.client.login(username=self.expected_username, password='invalid_passwd')

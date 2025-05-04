@@ -7,7 +7,7 @@ class CustomUser(AbstractUser):
         return self.username
 
     def __repr__(self):
-        return self.username
+        return f'User(username={self.username})'
 
 
 class Profile(models.Model):
