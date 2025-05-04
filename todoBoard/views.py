@@ -334,7 +334,7 @@ class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
 
                 return JsonResponse({'success': True, 'message': 'Task updated successfully.'})
             else:
-                messages.warning(self.request, f'You cannot update tasks in archived boards.')
+                messages.warning(self.request, 'You cannot update tasks in archived boards.')
                 return JsonResponse({'success': False, 'message': 'Cannot update task.'})
 
         except json.JSONDecodeError:
