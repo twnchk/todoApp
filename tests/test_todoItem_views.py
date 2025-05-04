@@ -182,7 +182,7 @@ class TodoItemViewTest(TestCase):
         self.assertEqual(str(messages[0]),
                          f'Task {self.test_object.name} has been deleted')
 
-    def task_update_view_user_not_allowed(self):
+    def test_task_update_view_user_not_allowed(self):
         self.login_user()
 
         response = self.client.post(reverse('task_update', args=(self.test_object.pk,)), follow=True)
