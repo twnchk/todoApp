@@ -3,6 +3,7 @@ from django.urls import reverse
 from users.models import CustomUser, Profile
 from django.contrib.auth import get_user_model
 
+
 class ProfileViewTest(TestCase):
     expected_username = "testUser321"
     expected_password = "testing123456"
@@ -87,3 +88,62 @@ class ProfileViewTest(TestCase):
         self.assertTrue(form.errors)
         self.assertIn('password2', form.errors)
 
+    def test_login_view_user_authenticated(self):
+        self.login_user()
+        response = self.client.get(reverse('user_login'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, '/boards/')
+
+    def test_login_view_get_request(self):
+        response = self.client.get(reverse('user_login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        self.assertIn('form', response.context)
+
+    def test_login_view_post_request(self):
+        form_data = {
+            'username': self.expected_username,
+            'password': self.expected_password
+        }
+        form_url = reverse('user_login')
+
+        response = self.client.post(path=form_url, data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, '/boards/')
+        self.assertTrue(self.user.is_authenticated)
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def test_login_view_post_request_form_not_valid(self):
+        form_data = {
+            'username': self.expected_username,
+            'password': 'testing12515125125'
+        }
+        form_url = reverse('user_login')
+
+        response = self.client.post(path=form_url, data=form_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertIn('form', response.context)
+        form = response.context['form']
+        self.assertTrue(form.errors)
+        self.assertIn('Please enter a correct username and password. Note that both fields may be case-sensitive.',
+                      form.non_field_errors())
+
+    def test_logout_view_user_not_authenticated(self):
+        response = self.client.get(reverse('user_logout'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, '/login/?next=/logout/')
+
+    def test_logout_view(self):
+        self.login_user()
+
+        response = self.client.get(reverse('user_logout'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, '/')
