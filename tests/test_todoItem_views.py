@@ -175,7 +175,7 @@ class TodoItemViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['success'], True)
         self.assertEqual(response.json()['message'], f'Task {self.test_object.name} has been deleted')
-        self.assertEqual(response.json()['board_id'], self.test_object.pk)
+        self.assertEqual(response.json()['board_id'], self.test_object.board.pk)
 
         # get message list from response request
         messages = list(get_messages(response.wsgi_request))

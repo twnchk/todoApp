@@ -120,10 +120,12 @@ class TodoListViewTest(TestCase):
 
     def test_boards_list_view_user_logged_in(self):
         self.login_user()
+        self.add_user_permissions()
 
         response = self.client.get(reverse('boards_list'))
         self.assertTemplateUsed(response, 'boards.html')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['boards']), 1)
 
     def test_all_boards_view_user_is_admin(self):
         """

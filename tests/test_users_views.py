@@ -30,10 +30,11 @@ class ProfileViewTest(TestCase):
         self.assertEqual(repr(self.user), 'User(username=testUser321)')
 
     def test_user_profile_user_not_logged(self):
-        response = self.client.get(reverse('user_profile', kwargs={'id': self.user.id}))
+        profile_url = reverse('user_profile', kwargs={'id': self.user.id})
+        response = self.client.get(profile_url)
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, '/login/?next=/profile/1')
+        self.assertRedirects(response, f'/login/?next={profile_url}')
 
     def test_register_view_user_authenticated(self):
         """
