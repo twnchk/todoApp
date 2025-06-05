@@ -53,15 +53,14 @@ def user_profile(request, id):
         'profile': profile,
         'user_boards': user_boards,
     }
-    if request.user.id == id:
-        if request.method == 'POST':
-            form = ProfileImageForm(request.POST, request.FILES, instance=profile)
-            if form.is_valid():
-                form.save()
-        else:
-            form = ProfileImageForm(instance=profile)
-        form_context = {'form': form}
-        context.update(form_context)
+
+    if request.method == 'POST':
+        form = ProfileImageForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+    else:
+        form = ProfileImageForm(instance=profile)
+    form_context = {'form': form}
+    context.update(form_context)
+
     return render(request, 'user_profile.html', context)
-
-
