@@ -51,7 +51,7 @@ class ProfileViewTest(TestCase):
         self.user.profile.refresh_from_db()
         form = response.context['form']
         self.assertFalse(form.errors)
-        self.assertTrue(self.user.profile.avatar.name.endswith('test_avatar.jpeg'))
+        self.assertTrue(self.user.profile.avatar.name.startswith('avatars/test_avatar'))
 
     def test_user_profile_user_not_logged(self):
         profile_url = reverse('user_profile', kwargs={'id': self.user.id})
