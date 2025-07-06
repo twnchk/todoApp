@@ -3,18 +3,21 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Q
+
+from .models import TodoList
 
 
-class TaskEditorRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
+class UserAllowedRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
     model = None  # always set in the view
     success_message = None
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.has_perm('todoBoard.can_edit_task') or request.user.is_superuser:
-            return super().dispatch(request, *args, **kwargs)
-        else:
+        task = self.get_object()
+        if not task.is_user_allowed(request.user):
             messages.error(request, "You don't have permissions to edit tasks. Please contact board administrator.")
-            return HttpResponseRedirect('/')
+            return render(request, 'forbidden.html')
+        return super().dispatch(request, *args, **kwargs)
 
 
 class BoardAdminRequiredMixin(LoginRequiredMixin):
@@ -31,6 +34,7 @@ class BoardAdminRequiredMixin(LoginRequiredMixin):
             return HttpResponseRedirect('/')
 
 
+# TODO: refactor this mixin when roles are implemented
 class BoardEditorRequiredMixin(LoginRequiredMixin):
     model = None  # always set in the view
 
@@ -38,12 +42,10 @@ class BoardEditorRequiredMixin(LoginRequiredMixin):
         board = get_board_from_kwargs(self.model, **kwargs)
         user = request.user
 
-        user_group_ids = set(user.groups.values_list('id', flat=True))
-        allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
+        # is_user_board_editor = bool(user_group_ids & allowed_group_ids) or user.is_superuser
+        is_user_board_editor = TodoList.objects.filter(Q(pk=board.pk) & Q(allowed_users=user) | Q(owner=user)).exists()
 
-        is_user_board_editor = bool(user_group_ids & allowed_group_ids) or user.is_superuser
-
-        if not is_user_board_editor:
+        if not (is_user_board_editor or user.is_superuser):
             return render(request, template_name='forbidden.html')
 
         return super().dispatch(request, *args, **kwargs)

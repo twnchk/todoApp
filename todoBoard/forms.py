@@ -16,10 +16,9 @@ class CreateTaskForm(forms.ModelForm):
         super(CreateTaskForm, self).__init__(*args, **kwargs)
 
         board = TodoList.objects.get(id=init_board_id)
-        allowed_group_ids = set(board.allowed_groups.values_list('id', flat=True))
 
         self.fields['assignee'].queryset = CustomUser.objects.filter(
-            Q(groups__id__in=allowed_group_ids) | Q(is_superuser=True)
+            Q(allowed_boards=board) | Q(pk=board.owner.pk)
         ).distinct()
 
         self.fields['board'].initial = init_board_id
@@ -29,4 +28,4 @@ class CreateTaskForm(forms.ModelForm):
 class CreateBoardForm(forms.ModelForm):
     class Meta:
         model = TodoList
-        exclude = ('allowed_groups', 'is_archived',)
+        exclude = ('is_archived','owner',)

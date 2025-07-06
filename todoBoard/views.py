@@ -1,8 +1,6 @@
 import json
 
 from django.contrib import messages
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
@@ -14,7 +12,7 @@ from django.views.generic import TemplateView, ListView, DetailView, CreateView,
 
 # Mixins
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .mixins import BoardAdminRequiredMixin, BoardEditorRequiredMixin, TaskEditorRequiredMixin
+from .mixins import BoardAdminRequiredMixin, BoardEditorRequiredMixin, UserAllowedRequiredMixin
 
 # Models
 from .models import TodoList, TodoItem
@@ -60,7 +58,7 @@ class UserBoardsListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         boards = super().get_queryset()
         user = self.request.user
-        return boards.filter(Q(allowed_groups__in=user.groups.all()) | Q(pk=user.pk)).distinct()
+        return boards.filter(Q(allowed_users__in=[user]) | Q(owner=user)).distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,7 +86,7 @@ class ArchivedBoardsList(LoginRequiredMixin, ListView):
         if user.is_superuser:
             return boards.filter(Q(is_archived=True))
 
-        return boards.filter(Q(allowed_groups__in=user.groups.all()) & Q(is_archived=True)).distinct()
+        return boards.filter(Q(allowed_users__in=[user]) & Q(is_archived=True)).distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -134,34 +132,19 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
     form_class = CreateBoardForm
     template_name = "create_board.html"
 
-    def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
-        form = self.form_class()  # Has to be instance! self.form_class would cause hard to identify bugs!
-        return render(request, self.template_name, context={'form': form})
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        self.object.save() # must be done before setting M2M fields
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            new_board_group_name = form.cleaned_data['title'] + ' admins'
-            new_group, created = Group.objects.get_or_create(name=new_board_group_name)
+        allowed_users = form.cleaned_data.get('allowed_users')
+        if allowed_users:
+            self.object.allowed_users.set(allowed_users)
 
-            if created:
-                board_content_type = ContentType.objects.get_for_model(TodoList)
-                task_content_type = ContentType.objects.get_for_model(TodoItem)
-                board_permissions = Permission.objects.filter(content_type=board_content_type)
-                task_permissions = Permission.objects.filter(content_type=task_content_type)
+        return redirect(self.get_success_url())
 
-                new_group.permissions.add(*board_permissions)
-                new_group.permissions.add(*task_permissions)
-                request.user.groups.add(new_group)
-
-                new_board = form.save()
-                new_board.allowed_groups.add(new_group)
-
-                return redirect('board_detail', pk=new_board.pk)
-            else:
-                form.add_error(None, 'A group with this name already exists.')
-        return render(request, self.template_name, context={'form': form})
+    def get_success_url(self):
+        return reverse_lazy('board_detail', kwargs={'pk': self.object.pk})
 
 
 class BoardUpdateView(LoginRequiredMixin, View):
@@ -257,13 +240,12 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-class TaskChangeStatusView(TaskEditorRequiredMixin, UpdateView):
+class TaskChangeStatusView(UserAllowedRequiredMixin, UpdateView):
     model = TodoItem
 
     def post(self, request, *args, **kwargs):
-        task_id = request.POST.get("task_id")
+        task = self.get_object()
         new_status = request.POST.get("new_status")
-        task = get_object_or_404(TodoItem, id=task_id)
         if not task.board.is_archived:
             task.status = new_status
             with transaction.atomic():
@@ -290,13 +272,14 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        allowed_group_ids = self.get_object().board.allowed_groups.values_list('id', flat=True)
-        assignees = CustomUser.objects.filter(groups__id__in=allowed_group_ids).distinct()
+        board = self.get_object().board
+        assignees = CustomUser.objects.filter(Q(allowed_boards=board) | Q(pk=board.owner.pk)).distinct()
         context['assignees'] = assignees
+
         return context
 
 
-class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
+class TaskUpdateView(UserAllowedRequiredMixin, UpdateView):
     model = TodoItem
 
     def set_task_assignee(self, task, task_assignee_data):
@@ -325,8 +308,7 @@ class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
 
                 # Update task data
                 if (task.name != task_name or task.status != task_status or
-                    task.description != task_description or str(task.assignee.id) != str(task_assignee)):
-
+                        task.description != task_description or str(task.assignee.id) != str(task_assignee)):
                     task.name = task_name
                     task.status = task_status
                     task.description = task_description
@@ -343,7 +325,7 @@ class TaskUpdateView(TaskEditorRequiredMixin, UpdateView):
             return JsonResponse({'success': False, 'error': 'Invalid JSON format'})
 
 
-class TaskDeleteView(TaskEditorRequiredMixin, DeleteView):
+class TaskDeleteView(UserAllowedRequiredMixin, DeleteView):
     model = TodoItem
 
     def get(self, request, *args, **kwargs):

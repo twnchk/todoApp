@@ -22,7 +22,7 @@ urlpatterns = [
     path('boards/<int:pk>/open', BoardRepoenView.as_view(), name='board_reopen'),
     # Tasks
     path('boards/<int:board_id>/addTask/', TaskCreateView.as_view(), name='task_create'),
-    path('changeTaskStatus/', TaskChangeStatusView.as_view(), name='task_change_status'),
+    path('task/<int:pk>/changeTaskStatus/', TaskChangeStatusView.as_view(), name='task_change_status'),
     path('task/<int:pk>', TaskDetailView.as_view(), name='task_detail'),
     path('taskUpdate/<int:pk>', TaskUpdateView.as_view(), name='task_update'),
     path('taskDelete/<int:pk>', TaskDeleteView.as_view(), name='task_delete'),

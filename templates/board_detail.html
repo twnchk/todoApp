@@ -260,9 +260,8 @@
                                 // Make an AJAX request to update the task status in the backend
                                 $.ajax({
                                     type: "POST",
-                                    url: "{% url 'task_change_status' %}",
+                                    url: "{% url 'task_change_status' 0 %}".replace("0", taskId),
                                     data: {
-                                        task_id: taskId,
                                         new_status: newStatus,
                                         csrfmiddlewaretoken: '{{ csrf_token }}',
                                     },

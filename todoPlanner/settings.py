@@ -51,7 +51,13 @@ INSTALLED_APPS = [
     'templatetags.custom_filters',
     'crispy_forms',
     'crispy_bootstrap4',
+    'guardian',
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # default django
+    'guardian.backends.ObjectPermissionBackend',  # guardian
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

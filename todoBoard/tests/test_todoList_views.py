@@ -1,9 +1,7 @@
 from json import dumps as json_dumps
 
 from django.test import TestCase, Client
-from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
-from django.contrib.contenttypes.models import ContentType
 from todoBoard.models import TodoList, TodoItem
 from users.models import CustomUser
 
@@ -12,35 +10,26 @@ from django.contrib.messages import get_messages
 
 class TodoListViewTest(TestCase):
     def setUp(self):
-        self.test_object = TodoList.objects.create(title='test_board', description='test_description')
         self.username = 'testUser321'
         self.admin_username = 'testSuperUser321'
         self.password = 'testing123456'
         self.user = CustomUser.objects.create_user(username=self.username,
                                                    email='test@example.com',
                                                    password=self.password)
+        self.test_object = TodoList.objects.create(title='test_board', description='test_description', owner=self.user)
         self.client = Client()
 
     def create_test_superuser(self):
         self.user = CustomUser.objects.create_superuser(username=self.admin_username,
                                                         email='test@example.com',
                                                         password=self.password)
+        # Update test_object owner. Dirty fix. TOOD: refactor
+        self.test_object.owner = self.user
 
     def login_user(self, is_superuser=False):
         login = self.client.login(username=self.admin_username if is_superuser else self.username,
                                   password=self.password)
         self.assertTrue(login)
-
-    def add_user_permissions(self):
-        test_permissions_group, _ = Group.objects.get_or_create(name='Board Test Admin')
-        test_board_content_type = ContentType.objects.get_for_model(TodoList)
-
-        # Add all permissions
-        test_board_admin_permissions = Permission.objects.filter(content_type=test_board_content_type)
-        test_permissions_group.permissions.add(*test_board_admin_permissions)
-
-        self.test_object.allowed_groups.add(test_permissions_group)
-        self.user.groups.add(test_permissions_group)
 
     def test_board_detail_user_not_logged_in(self):
         """
@@ -56,7 +45,6 @@ class TodoListViewTest(TestCase):
         with required permissions
         """
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('board_detail', args=(self.test_object.id,)))
         self.assertEqual(response.status_code, 200)
@@ -64,12 +52,14 @@ class TodoListViewTest(TestCase):
 
     def test_board_detail_user_without_permissions(self):
         """
-        Test that board can NOT be displayed if user does NOT belong to group
-        with required permissions
+        Test that board can NOT be displayed if user is not one of allowed users
         """
 
-        # Do not add user to any group
-
+        # Create different user that is used as board owner
+        self.username = 'johnDoe'
+        self.user = CustomUser.objects.create_user(username=self.username,
+                                                   email='johnDoe@example.com',
+                                                   password=self.password)
         self.login_user()
 
         response = self.client.get(reverse('board_detail', args=(self.test_object.id,)))
@@ -78,7 +68,6 @@ class TodoListViewTest(TestCase):
 
     def test_board_detail_backlog(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('board_backlog', args=(self.test_object.id,)))
         self.assertEqual(response.status_code, 200)
@@ -90,15 +79,12 @@ class TodoListViewTest(TestCase):
         self.test_object.save()
 
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('board_detail', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'board_detail_archive.html')
 
     def test_board_archived_backlog(self):
-        self.add_user_permissions()
-
         self.test_object.is_archived = True
         self.test_object.save()
 
@@ -112,15 +98,12 @@ class TodoListViewTest(TestCase):
         self.test_object.is_archived = True
         self.test_object.save()
 
-        self.add_user_permissions()
-
         response = self.client.get(reverse('board_backlog', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'forbidden.html')
 
     def test_boards_list_view_user_logged_in(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('boards_list'))
         self.assertTemplateUsed(response, 'boards.html')
@@ -201,41 +184,6 @@ class TodoListViewTest(TestCase):
         self.assertTemplateUsed(response, 'create_board.html')
         self.assertIn('form', response.context)
 
-    def test_board_create_new_group_created(self):
-        self.login_user()
-
-        form_url = reverse('board_create')
-        form_data = {
-            'title': 'DummyBoard'
-        }
-
-        # Simulate form submission
-        response = self.client.post(form_url, form_data)
-        created_board = TodoList.objects.filter(title='DummyBoard')
-        self.assertRedirects(response, f'/boards/{created_board.get().pk}')
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(created_board.exists(), 'Board was not created.')
-        self.assertTrue(created_board.get().allowed_groups.filter(name='DummyBoard admins').exists(),
-                        'Group was not added to board')
-        self.assertTrue(Group.objects.filter(name='DummyBoard admins').exists(), 'Group was not created')
-        self.assertTrue(self.user.groups.filter(name='DummyBoard admins').exists(), "User was not added to the group.")
-
-    def test_create_view_create_board_when_same_group_exists(self):
-        Group.objects.create(name='test_board admins')
-
-        self.login_user()
-
-        form_url = reverse('board_create')
-        form_data = {
-            'title': 'test_board'
-        }
-
-        # Simulate form submission
-        response = self.client.post(form_url, form_data)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFormError(response.context['form'], None, 'A group with this name already exists.')
-
     def test_board_update_view_get_method(self):
         self.login_user()
 
@@ -291,6 +239,10 @@ class TodoListViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_board_delete_view_user_not_board_admin(self):
+        # Create different user that is used as board owner
+        self.user = CustomUser.objects.create_user(username='johnDoe',
+                                                   email='johnDoe@example.com',
+                                                   password=self.password)
         self.login_user()
 
         response = self.client.post(reverse('board_delete', kwargs={'pk': f'{self.test_object.pk}'}))
@@ -330,6 +282,10 @@ class TodoListViewTest(TestCase):
         self.assertEqual(task.status, 'DN')
 
     def test_board_close_view_user_not_editor(self):
+        # Create different user that is used as board owner
+        self.user = CustomUser.objects.create_user(username='johnDoe',
+                                                   email='johnDoe@example.com',
+                                                   password=self.password)
         self.login_user()
 
         view_url = reverse('board_close', kwargs={'pk': f'{self.test_object.pk}'})
@@ -339,7 +295,6 @@ class TodoListViewTest(TestCase):
         self.assertTemplateUsed('forbidden.html')
         # self.assertEqual(response.json()['success'], True)
         # self.assertEqual(response.json()['message'], 'Board closed successfully.')
-
 
     def test_board_reopen_view_user_is_superuser(self):
         self.create_test_superuser()

@@ -6,10 +6,10 @@ from users.models import CustomUser
 
 class FilterStatusTemplateTagTest(TestCase):
     def setUp(self):
-        self.board = TodoList.objects.create(title='dummy board')
         self.user = CustomUser.objects.create_user(username='testUser321',
                                                    email='test@example.com',
                                                    password='testing123456')
+        self.board = TodoList.objects.create(title='dummy board', owner=self.user)
         self.tasks = TodoItem.objects.bulk_create(
             [
                 TodoItem(name='Foo', author=self.user, board=self.board),

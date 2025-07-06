@@ -78,6 +78,9 @@ class ProfileViewTest(TestCase):
         self.assertIn('form', response.context)
 
     def test_register_view_post_request(self):
+        # Get initial user count to avoid hardcoding this value which might cause test flakiness
+        initial_count = get_user_model().objects.count()
+
         form_data = {
             'username': 'JohnDoe321',
             'email': 'johndoe.jd@imaginary.com',
@@ -91,9 +94,15 @@ class ProfileViewTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/boards/')
-        self.assertEqual(users.count(), 2)
+        # Check that exactly one new user was created
+        self.assertEqual(users.count(), initial_count + 1)
+        # Verify the new user was created with correct username
+        self.assertTrue(users.filter(username='JohnDoe321').exists())
 
     def test_register_view_post_request_form_not_valid(self):
+        # Get initial user count to avoid hardcoding this value which might cause test flakiness
+        initial_count = get_user_model().objects.count()
+
         form_data = {
             'username': 'JohnDoe321',
             'email': 'johndoe.jd@imaginary.com',
@@ -107,7 +116,7 @@ class ProfileViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'register.html')
-        self.assertEqual(users.count(), 1)
+        self.assertEqual(users.count(), initial_count)
         self.assertIn('form', response.context)
         form = response.context['form']
         self.assertTrue(form.errors)

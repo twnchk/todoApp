@@ -1,9 +1,7 @@
-from users.models import CustomUser as User
 from django.db import models
-from django.contrib.auth.models import Group
 from django.conf import settings
 
-
+#TODO: use django-guardian for more robust and enhanced permissions system (object level)
 class TodoList(models.Model):
     class Meta:
         permissions = [
@@ -15,26 +13,18 @@ class TodoList(models.Model):
 
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=200, null=True, blank=True)
-    allowed_groups = models.ManyToManyField(Group, related_name='allowed_boards', blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    allowed_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='allowed_boards', blank=True)
     is_archived = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
 
     def is_user_allowed(self, user) -> bool:
-        if user.is_superuser:
-            return True
-        user_group_ids = set(user.groups.values_list('id', flat=True))
-        allowed_group_ids = set(self.allowed_groups.values_list('id', flat=True))
-        return bool(user_group_ids.intersection(allowed_group_ids))
+        return user == self.owner or user in self.allowed_users.all() or user.is_superuser
 
     def show_delete_button(self, user) -> bool:
-        if user.is_superuser:
-            return True
-
-        user_group_ids = set(user.groups.values_list('id', flat=True))
-        allowed_group_ids = set(self.allowed_groups.values_list('id', flat=True))
-        return bool(set(user_group_ids) & set(allowed_group_ids))
+        return self.is_user_allowed(user)
 
 class TodoItem(models.Model):
     class Meta:
@@ -64,9 +54,5 @@ class TodoItem(models.Model):
     def __str__(self):
         return self.name
 
-    def is_user_allowed(self, user):
-        if user.is_superuser:
-            return True
-        user_group_ids = set(user.groups.values_list('id', flat=True))
-        allowed_group_ids = set(self.board.allowed_groups.all().values_list('id', flat=True))
-        return bool(user_group_ids.intersection(allowed_group_ids))
+    def is_user_allowed(self, user) -> bool:
+        return user == self.board.owner or user in self.board.allowed_users.all() or user.is_superuser

@@ -1,15 +1,13 @@
 from json import dumps as json_dumps
 
 from django.test import TestCase, Client, RequestFactory
-from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
-from django.contrib.contenttypes.models import ContentType
-from todoBoard.models import TodoList, TodoItem
-from users.models import CustomUser
-
 from django.contrib.messages import get_messages
 
+from todoBoard.models import TodoList, TodoItem
 from todoBoard.views import TaskCreateView
+
+from users.models import CustomUser
 
 
 class TodoItemViewTest(TestCase):
@@ -22,7 +20,7 @@ class TodoItemViewTest(TestCase):
                                                    password=self.password)
         self.client = Client()
 
-        self.board = TodoList.objects.create(title='test_board', description='test_description')
+        self.board = TodoList.objects.create(title='test_board', description='test_description', owner=self.user)
 
         self.test_object = TodoItem.objects.create(name='test_task',
                                                    description='task_description',
@@ -34,21 +32,20 @@ class TodoItemViewTest(TestCase):
                                                         email='test@example.com',
                                                         password=self.password)
 
+    def create_not_allowed_user(self):
+        username = 'unauthorizedUser'
+        email = 'unauthorizedUser@example.com'
+        self.user = CustomUser.objects.create_user(username=username,
+                                                   email=email,
+                                                   password=self.password)
+
+        login = self.client.login(username=username, password=self.password)
+        self.assertTrue(login)
+
     def login_user(self, is_superuser=False):
         login = self.client.login(username=self.admin_username if is_superuser else self.username,
                                   password=self.password)
         self.assertTrue(login)
-
-    def add_user_permissions(self):
-        task_permissions_group, _ = Group.objects.get_or_create(name=f'dummy group')
-        task_group_content_type = ContentType.objects.get_for_model(TodoItem)
-
-        # Add all permissions to the group
-        test_task_admin_permissions = Permission.objects.filter(content_type=task_group_content_type)
-        task_permissions_group.permissions.add(*test_task_admin_permissions)
-
-        self.test_object.board.allowed_groups.add(task_permissions_group)
-        self.user.groups.add(task_permissions_group)
 
     def test_task_create_view_user_not_logged_in(self):
         response = self.client.post(reverse('task_create', args=(self.board.id,)))
@@ -94,9 +91,8 @@ class TodoItemViewTest(TestCase):
         self.create_test_superuser()
         self.login_user(is_superuser=True)
 
-        form_url = reverse('task_change_status')
+        form_url = reverse('task_change_status', kwargs={'pk': self.test_object.pk})
         form_data = {
-            'task_id': self.test_object.pk,
             'new_status': 'DN'
         }
         response = self.client.post(form_url, form_data)
@@ -112,13 +108,13 @@ class TodoItemViewTest(TestCase):
         self.create_test_superuser()
         self.login_user(is_superuser=True)
 
-        response = self.client.get(reverse('task_change_status'))
+        response = self.client.get(reverse('task_change_status', kwargs={'pk': self.test_object.pk}))
 
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json()['error'], 'GET method is not allowed for this action')
 
     def test_task_detail_view_user_not_allowed(self):
-        self.login_user()
+        self.create_not_allowed_user()
 
         # follow the response to verify a message is raised
         response = self.client.get(reverse('task_detail', args=(self.test_object.pk,)), follow=True)
@@ -129,9 +125,8 @@ class TodoItemViewTest(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(str(messages[0]), 'That task does not exist or you are not allowed to see it.')
 
-    def test_task_detail_view_user_with_permissions(self):
+    def test_task_detail_view_user_allowed(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('task_detail', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 200)
@@ -147,7 +142,7 @@ class TodoItemViewTest(TestCase):
         self.assertTemplateUsed(response, 'task_detail.html')
 
     def test_task_delete_view_user_not_allowed(self):
-        self.login_user()
+        self.create_not_allowed_user()
 
         # follow the response to verify a message is raised
         response = self.client.post(reverse('task_delete', args=(self.test_object.pk,)), follow=True)
@@ -161,7 +156,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_delete_view_get_method(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('task_delete', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 405)
@@ -169,7 +163,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_delete_view(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.post(reverse('task_delete', args=(self.test_object.pk,)), follow=True)
         self.assertEqual(response.status_code, 200)
@@ -183,7 +176,7 @@ class TodoItemViewTest(TestCase):
                          f'Task {self.test_object.name} has been deleted')
 
     def test_task_update_view_user_not_allowed(self):
-        self.login_user()
+        self.create_not_allowed_user()
 
         response = self.client.post(reverse('task_update', args=(self.test_object.pk,)), follow=True)
 
@@ -196,7 +189,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_update_view_get_method(self):
         self.login_user()
-        self.add_user_permissions()
 
         response = self.client.get(reverse('task_update', args=(self.test_object.pk,)))
         self.assertEqual(response.status_code, 405)
@@ -204,7 +196,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_update_view(self):
         self.login_user()
-        self.add_user_permissions()
 
         self.assertEqual(self.test_object.name, 'test_task')
         self.assertEqual(self.test_object.description, 'task_description')
@@ -238,7 +229,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_update_view_unassigned_user(self):
         self.login_user()
-        self.add_user_permissions()
 
         form_url = reverse('task_update', kwargs={'pk': f'{self.test_object.pk}'})
         form_data = {
@@ -251,13 +241,15 @@ class TodoItemViewTest(TestCase):
         response = self.client.post(path=form_url, data=json_dumps(form_data), content_type='application/json',
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
+        self.test_object.refresh_from_db()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['success'], True)
         self.assertEqual(response.json()['message'], 'Task updated successfully.')
+        self.assertEqual(self.test_object.assignee, None)
 
     def test_task_update_view_board_archived(self):
         self.login_user()
-        self.add_user_permissions()
         self.test_object.board.is_archived = True
         # Need to save modified object since TaskUpdateView fetches the object from db
         self.test_object.board.save()
@@ -282,7 +274,6 @@ class TodoItemViewTest(TestCase):
 
     def test_task_update_view_invalid_json_request(self):
         self.login_user()
-        self.add_user_permissions()
 
         form_url = reverse('task_update', kwargs={'pk': f'{self.test_object.pk}'})
         form_data = '{invalid: json,,}'
