@@ -19,7 +19,7 @@ from .models import TodoList, TodoItem
 from users.models import CustomUser
 
 # Forms
-from .forms import CreateTaskForm, CreateBoardForm
+from .forms import CreateTaskForm, CreateBoardForm, ManageBoardForm
 
 
 class IndexView(TemplateView):
@@ -169,6 +169,13 @@ class BoardUpdateView(LoginRequiredMixin, View):
 
         return JsonResponse({'success': True, 'message': 'Board updated successfully.'})
 
+class BoardManageView(BoardAdminRequiredMixin, UpdateView):
+    model = TodoList
+    form_class = ManageBoardForm
+    template_name = 'manage_board.html'
+
+    def get_success_url(self):
+        return reverse_lazy('board_detail', kwargs={'pk': self.object.pk})
 
 class BoardDeleteView(BoardAdminRequiredMixin, DeleteView):
     model = TodoList
@@ -289,6 +296,7 @@ class TaskUpdateView(UserAllowedRequiredMixin, UpdateView):
             task_assignee_id = int(task_assignee_data)
             new_assignee = get_object_or_404(CustomUser, id=task_assignee_id)
             task.assignee = new_assignee
+        task.save()
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)

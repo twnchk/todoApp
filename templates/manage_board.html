@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %} TODO Manage board {% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="container rounded-container">
+        <h1>Manage board</h1>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button class="btn btn-primary" type="submit">Update</button>
+        </form>
+    </div>
+</div>
+<script>
+    console.log({{form.errors}});
+</script>
+{% endblock %}

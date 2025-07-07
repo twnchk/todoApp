@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import CheckboxSelectMultiple
 from django.db.models import Q
 from .models import TodoItem, TodoList
 from users.models import CustomUser
@@ -28,4 +29,18 @@ class CreateTaskForm(forms.ModelForm):
 class CreateBoardForm(forms.ModelForm):
     class Meta:
         model = TodoList
-        exclude = ('is_archived','owner',)
+        exclude = ('is_archived', 'owner',)
+
+
+class ManageBoardForm(forms.ModelForm):
+    """
+    Form used to manage access and roles in specific board
+    """
+    allowed_users = forms.ModelMultipleChoiceField(
+        queryset=CustomUser.objects.all(),
+        widget=CheckboxSelectMultiple,
+        required=False
+    )
+    class Meta:
+        model = TodoList
+        fields = ['allowed_users', 'owner', ]

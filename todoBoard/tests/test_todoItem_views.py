@@ -227,6 +227,36 @@ class TodoItemViewTest(TestCase):
         self.assertEqual(self.test_object.assignee, self.user)
         self.assertEqual(self.test_object.status, 'DN')
 
+    def test_task_update_view_assign_user(self):
+        """
+        Test that user assignment works when other data is not sent
+        """
+        self.login_user()
+        self.assertEqual(self.test_object.assignee, None)
+
+        form_url = reverse('task_update', kwargs={'pk': f'{self.test_object.pk}'})
+
+        form_data = {
+            'taskName': self.test_object.name,
+            'taskAssignee': f"{self.user.pk}",
+            'taskStatus': self.test_object.status,
+            'taskDescription': self.test_object.description
+        }
+
+        response = self.client.post(path=form_url, data=json_dumps(form_data), content_type='application/json',
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        self.test_object.refresh_from_db()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
+        self.assertEqual(response.json()['message'], 'Task updated successfully.')
+
+        self.assertEqual(self.test_object.assignee, self.user)
+        self.assertEqual(self.test_object.name, 'test_task')
+        self.assertEqual(self.test_object.description, 'task_description')
+        self.assertEqual(self.test_object.status, 'NS')
+
     def test_task_update_view_unassigned_user(self):
         self.login_user()
 

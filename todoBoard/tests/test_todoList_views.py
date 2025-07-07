@@ -184,6 +184,24 @@ class TodoListViewTest(TestCase):
         self.assertTemplateUsed(response, 'create_board.html')
         self.assertIn('form', response.context)
 
+    def test_board_create_new_group_created(self):
+        self.login_user()
+
+        form_url = reverse('board_create')
+
+        form_data = {
+            'title': 'DummyBoard'
+        }
+
+        # Simulate form submission
+        response = self.client.post(form_url, form_data)
+        created_board = TodoList.objects.filter(title='DummyBoard')
+
+        self.assertRedirects(response, f'/boards/{created_board.get().pk}')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(created_board.exists(), 'Board was not created.')
+        self.assertEqual(created_board.get().owner, self.user)
+
     def test_board_update_view_get_method(self):
         self.login_user()
 
@@ -240,7 +258,8 @@ class TodoListViewTest(TestCase):
 
     def test_board_delete_view_user_not_board_admin(self):
         # Create different user that is used as board owner
-        self.user = CustomUser.objects.create_user(username='johnDoe',
+        self.username = 'johnDoe'
+        self.user = CustomUser.objects.create_user(username=self.username,
                                                    email='johnDoe@example.com',
                                                    password=self.password)
         self.login_user()
@@ -293,15 +312,84 @@ class TodoListViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed('forbidden.html')
-        # self.assertEqual(response.json()['success'], True)
-        # self.assertEqual(response.json()['message'], 'Board closed successfully.')
 
     def test_board_reopen_view_user_is_superuser(self):
         self.create_test_superuser()
         self.login_user(is_superuser=True)
 
-        view_url = reverse('board_reopen', kwargs={'pk': f'{self.test_object.pk}'})
+        view_url = reverse('board_reopen', kwargs={'pk': self.test_object.pk})
         response = self.client.post(view_url)
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, f'/boards/{self.test_object.pk}')
+
+    def test_manage_board_add_allowed_user_by_board_owner(self):
+        """
+        Test that new user is successfully added to 'allowed_users' by board owner via ManageBoard view
+        """
+        new_user = CustomUser.objects.create_user(username='johnDoe',
+                                                  email='johnDoe@example.com',
+                                                  password=self.password)
+
+        self.login_user()
+
+        form_data = {
+            'title': self.test_object.title,
+            'description': self.test_object.description,
+            'owner': self.test_object.owner.pk,
+            'allowed_users': [new_user.pk],
+        }
+        response = self.client.post(reverse('board_manage', kwargs={'pk': self.test_object.pk}), data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f'/boards/{self.test_object.pk}')
+        self.assertTrue(self.test_object.allowed_users.filter(pk=new_user.pk).exists())
+
+    def test_manage_board_add_allowed_user_by_superuser(self):
+        """
+        Test that new user is successfully added to 'allowed_users' by superuser via ManageBoard view
+        """
+        new_user = CustomUser.objects.create_user(username='johnDoe',
+                                                  email='johnDoe@example.com',
+                                                  password=self.password)
+
+        self.create_test_superuser()
+        self.login_user(is_superuser=True)
+
+        form_data = {
+            'title': self.test_object.title,
+            'description': self.test_object.description,
+            'owner': self.test_object.owner.pk,
+            'allowed_users': [new_user.pk],
+        }
+        response = self.client.post(reverse('board_manage', kwargs={'pk': self.test_object.pk}), data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f'/boards/{self.test_object.pk}')
+        self.assertTrue(self.test_object.allowed_users.filter(pk=new_user.pk).exists())
+
+    def test_manage_board_user_not_added(self):
+        """
+        Test that new user is not added to 'allowed_users' if requester is not a board owner via ManageBoard view
+        """
+        self.username = 'johnDoe'
+        new_user = CustomUser.objects.create_user(username=self.username,
+                                                  email='johnDoe@example.com',
+                                                  password=self.password)
+
+        self.login_user()
+
+        form_data = {
+            'title': self.test_object.title,
+            'description': self.test_object.description,
+            'owner': self.test_object.owner.pk,
+            'allowed_users': [new_user.pk],
+        }
+        response = self.client.post(reverse('board_manage', kwargs={'pk': self.test_object.pk}), data=form_data)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]),
+                         'Not enough privileges. Please contact board administrator.')
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f'/')
+        self.assertFalse(self.test_object.allowed_users.filter(pk=new_user.pk).exists())

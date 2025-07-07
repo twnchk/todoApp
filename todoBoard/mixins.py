@@ -19,15 +19,16 @@ class UserAllowedRequiredMixin(LoginRequiredMixin, SuccessMessageMixin):
             return render(request, 'forbidden.html')
         return super().dispatch(request, *args, **kwargs)
 
-
+# TODO: refactor this mixin when roles are implemented
 class BoardAdminRequiredMixin(LoginRequiredMixin):
     model = None  # always set in the view
 
     def dispatch(self, request, *args, **kwargs):
         board = get_board_from_kwargs(self.model, **kwargs)
-        group_name = f"{board.title} admins"
+        user = request.user
 
-        if request.user.groups.filter(name=group_name).exists() or request.user.is_superuser:
+        is_user_board_admin = TodoList.objects.filter(Q(pk=board.pk) & Q(owner=user)).exists()
+        if is_user_board_admin or user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
         else:
             messages.error(request, "Not enough privileges. Please contact board administrator.")
@@ -42,7 +43,6 @@ class BoardEditorRequiredMixin(LoginRequiredMixin):
         board = get_board_from_kwargs(self.model, **kwargs)
         user = request.user
 
-        # is_user_board_editor = bool(user_group_ids & allowed_group_ids) or user.is_superuser
         is_user_board_editor = TodoList.objects.filter(Q(pk=board.pk) & Q(allowed_users=user) | Q(owner=user)).exists()
 
         if not (is_user_board_editor or user.is_superuser):
