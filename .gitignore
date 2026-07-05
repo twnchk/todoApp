@@ -7,6 +7,9 @@ __pycache__/
 # Local development settings
 *.env
 
+# Static files
+/staticfiles/
+
 # Database
 *.sqlite3
 

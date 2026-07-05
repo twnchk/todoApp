@@ -80,9 +80,6 @@ class ArchivedBoardsList(LoginRequiredMixin, ListView):
         boards = super().get_queryset()
         user = self.request.user
 
-        for board in boards:
-            board.show_delete_button = board.show_delete_button(user)
-
         if user.is_superuser:
             return boards.filter(Q(is_archived=True))
 
@@ -147,7 +144,9 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('board_detail', kwargs={'pk': self.object.pk})
 
 
-class BoardUpdateView(LoginRequiredMixin, View):
+class BoardUpdateView(BoardEditorRequiredMixin, View):
+    model = TodoList
+
     def get(self, request, *args, **kwargs):
         return JsonResponse({'error': 'GET method is not allowed for this action'}, status=405)
 
@@ -316,7 +315,7 @@ class TaskUpdateView(UserAllowedRequiredMixin, UpdateView):
 
                 # Update task data
                 if (task.name != task_name or task.status != task_status or
-                        task.description != task_description or str(task.assignee.id) != str(task_assignee)):
+                        task.description != task_description):
                     task.name = task_name
                     task.status = task_status
                     task.description = task_description

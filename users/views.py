@@ -44,10 +44,7 @@ def user_logout(request):
 @login_required
 def user_profile(request, id):
     profile = get_object_or_404(Profile, pk=id)
-    user_boards = set()
-
-    for group in profile.user.groups.all():
-        user_boards.update(group.allowed_boards.all())
+    user_boards = profile.user.allowed_boards.all()
 
     context = {
         'profile': profile,

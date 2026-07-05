@@ -43,4 +43,4 @@ class ManageBoardForm(forms.ModelForm):
     )
     class Meta:
         model = TodoList
-        fields = ['allowed_users', 'owner', ]
+        fields = ['allowed_users',]

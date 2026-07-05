@@ -204,13 +204,38 @@ class TodoListViewTest(TestCase):
 
     def test_board_update_view_get_method(self):
         self.login_user()
+        self.test_object.allowed_users.set([self.user])
 
         response = self.client.get(reverse('board_update', kwargs={'pk': f'{self.test_object.pk}'}))
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json()['error'], 'GET method is not allowed for this action')
 
-    def test_board_update_view(self):
+    def test_board_update_view_user_is_editor(self):
         self.login_user()
+        self.test_object.allowed_users.set([self.user])
+
+        form_url = reverse('board_update', kwargs={'pk': f'{self.test_object.pk}'})
+        form_data = {
+            'boardTitle': 'updated_title',
+            'boardDescription': 'lorem ipsum',
+        }
+
+        response = self.client.post(path=form_url, data=json_dumps(form_data), content_type='application/json',
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
+        self.assertEqual(response.json()['message'], 'Board updated successfully.')
+
+        # Refresh the object from DB
+        self.test_object.refresh_from_db()
+        self.assertEqual(self.test_object.title, 'updated_title')
+        self.assertEqual(self.test_object.description, 'lorem ipsum')
+
+    def test_board_update_view_user_is_admin(self):
+        self.create_test_superuser()
+        self.assertTrue(self.user.is_superuser)
+
+        self.login_user(is_superuser=True)
 
         form_url = reverse('board_update', kwargs={'pk': f'{self.test_object.pk}'})
         form_data = {
@@ -231,6 +256,7 @@ class TodoListViewTest(TestCase):
 
     def test_board_update_view_invalid_request(self):
         self.login_user()
+        self.test_object.allowed_users.set([self.user])
 
         form_url = reverse('board_update', kwargs={'pk': f'{self.test_object.pk}'})
         form_data = {
