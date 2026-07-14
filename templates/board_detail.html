@@ -1,293 +1,213 @@
 {% extends 'base.html' %}
 {% block title %} TODO Backlog {% endblock %}
+
+{% block sidebar %}
+{% include 'includes/board_sidebar.html' with board=board active='detail' %}
+{% endblock %}
+
 {% block content %}
 {% load filter %}
-<div class="container-fluid">
-    {% if board %}
-    <div class="container rounded-container">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4>Board: <span id="boardTitle" contenteditable="false">{{ board.title }}</span></h4>
-            <button id="editBtn" class="btn btn-light btn-sm">Edit</button>
+{% if board %}
+<div class="board-header">
+    <div>
+        <div class="board-title-row">
+            <h1 class="board-title" id="boardTitle" contenteditable="false">{{ board.title }}</h1>
+            <button id="editBtn" class="icon-btn" title="Edit">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L7 16H4v-3z"/></svg>
+            </button>
             <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
         </div>
-        <h6>Description: <span id="boardDescription" contenteditable="false">{{ board.description }}</span></h6>
+        <p class="board-desc" id="boardDescription" contenteditable="false">{{ board.description }}</p>
     </div>
-    {% endif %}
-    <div class="row">
-        <!-- Left-side menu -->
-        <div class="col-md-3">
-            <!-- Menu content goes here -->
-            <ul class="nav flex-column side-menu">
-                <li class="nav-item">
-                    <a class="btn btn-success btn-sm btn-block" href="{% url 'task_create' board.id %}"> Add Task </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_backlog' board.id %}"> Backlog </a>
-                </li>
-                {% if user == board.owner or user.is_superuser %}
-                <li class="nav-item mt-2">
-                    <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_manage' board.id %}"> Manage board </a>
-                </li>
-                {% endif %}
-                <div class="hr"></div>
-                <li class="nav-item mt-2">
-                    <a class="btn btn-warning btn-sm btn-block" data-toggle="modal" data-target="#closeConfirmModal">
-                        Close Board
-                    </a>
-                    <!-- Modal -->
-                    <div class="modal fade" id="closeConfirmModal" tabindex="-1" role="dialog"
-                         aria-labelledby="modalLabel" aria-hidden="true" data-boardid="{{ board.id }}">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalLabel">Confirm Close</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-                                    Are you sure you want to close this board?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" onclick="closeBoard()">Close Board
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-            </ul>
+</div>
+{% endif %}
+
+{% if tasks %}
+<div class="kanban-board">
+    <div class="kanban-column" data-status="NS">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Not started</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"NS"|length }}</span>
         </div>
-        <!-- Centered content -->
-        <div class="col-md-9">
-            <div class="container rounded-container">
-                {% if tasks %}
-                <div class="row">
-                    <div class="col droppable-status" id="NS">
-                        <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
-                        {% for task in tasks|filter_status:"NS" %}
-                        <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="BL">
-                        <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
-                        {% for task in tasks|filter_status:"BL" %}
-                        <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="PR">
-                        <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
-                        {% for task in tasks|filter_status:"PR" %}
-                        <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="DN">
-                        <h4 class="card-subtitle mb-2 text-muted">Done</h4>
-                        {% for task in tasks|filter_status:"DN" %}
-                        <div class="card mb-2 draggable-card" id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <p>No tasks in this board.</p>
-                {% endif %}
-                <script>
-                    function closeBoard() {
-                        // Code to close the board
-                        var modal = $('#closeConfirmModal');
-                        var boardId = modal.data('boardid');
-
-                        var closeUrl = `/boards/${boardId}/close`;
-                        $.ajax({
-                            url: closeUrl,
-                            type: "POST",
-                            headers: { "X-CSRFToken": '{{ csrf_token }}' },  // Ensure CSRF token is included
-                            success: function(response) {
-                                if (response.success) {
-                                    // Refresh page or update UI
-                                    window.location.reload();
-                                } else {
-                                    console.error('Error:', response.message);
-                                }
-                            },
-                            error: function(error) {
-                                console.error('Error:', error);
-                            }
-                        });
-                    }
-
-                    $("#DN").css("text-decoration", "line-through");
-                    $.ajaxSetup({
-                        headers: { "X-CSRFToken": '{{ csrf_token }}' }
-                    });
-                    document.addEventListener('DOMContentLoaded', function(){
-                      var editBtn = document.getElementById('editBtn');
-                      var saveBtn = document.getElementById('saveBtn');
-                      var boardTitle = document.getElementById('boardTitle');
-                      var boardDescription = document.getElementById('boardDescription');
-
-                      // Function to toggle editable styling
-                      function toggleEditableStyle(element, isEditable) {
-                          if (isEditable) {
-                              element.classList.add('editable');
-                          } else {
-                              element.classList.remove('editable');
-                          }
-                      }
-
-                      // Toggle editability on button click
-                      editBtn.addEventListener('click', function(){
-                          // Toggle contentEditable and style
-                          [boardTitle, boardDescription].forEach(function(element) {
-                              element.contentEditable = "true";
-                              toggleEditableStyle(element, true);
-                          });
-
-                          boardTitle.focus(); // Focus on the name field to start editing
-                          editBtn.style.display = 'none';
-                          saveBtn.style.display = 'inline';
-                      });
-
-                      // Save the changes
-                      saveBtn.addEventListener('click', function(){
-                          // Toggle contentEditable and remove style
-                          [boardTitle, boardDescription].forEach(function(element) {
-                              element.contentEditable = "false";
-                              toggleEditableStyle(element, false);
-                          });
-
-                          editBtn.style.display = 'inline';
-                          saveBtn.style.display = 'none';
-
-                          var JsonData = {
-                             boardTitle: boardTitle.textContent,
-                             boardDescription: boardDescription.textContent,
-                             csrfmiddlewaretoken: '{{ csrf_token }}'
-                          };
-
-                          $.ajax({
-                              url: "{% url 'board_update' board.id %}",
-                              type: "POST",
-                              contentType: "application/json",  // Indicating the type of content being sent
-                              data: JSON.stringify(JsonData),  // Converting the JavaScript object to a JSON string
-                              success: function(data) {
-                                  console.log('Success:', data);
-                              },
-                              error: function(error) {
-                                  console.error('Error:', error);
-                              }
-                          });
-                      });
-                    });
-                    function displayMessage(message) {
-                        var html = `
-                            <div class="container-fluid p-0">
-                                <div class="alert alert-danger alert-dismissible" role="alert">
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="True">&times;</span>
-                                    </button>
-                                    ${message}
-                                </div>
-                            </div>`;
-
-                        $('#message-container').append(html);
-                        // Fade out the message after 5 seconds
-                        $(".alert").delay(5000).fadeOut(200, function() {
-                            $(this).remove();
-                        });
-                    }
-                    // Draggable tasks
-                    $(function () {
-                        $(".draggable-card").draggable({
-                            revert: "invalid",
-                            helper: "clone",
-                        });
-
-                        $(".droppable-status").droppable({
-                            accept: ".draggable-card",
-                            drop: function (event, ui) {
-                                var taskId = ui.draggable.attr("id").split("_")[1];
-                                var newStatus = $(this).attr("id");
-
-                                // Make an AJAX request to update the task status in the backend
-                                $.ajax({
-                                    type: "POST",
-                                    url: "{% url 'task_change_status' 0 %}".replace("0", taskId),
-                                    data: {
-                                        new_status: newStatus,
-                                        csrfmiddlewaretoken: '{{ csrf_token }}',
-                                    },
-                                    success: function () {
-                                        ui.draggable.appendTo($(event.target));
-                                    },
-                                    error: function(xhr) {
-                                        if (xhr.status === 403) {
-                                            displayMessage(xhr.responseJSON.error);
-                                        } else {
-                                            // Handle other types of errors
-                                            displayMessage("An unexpected error occurred.");
-                                        }
-                                    }
-                                });
-                            },
-                        });
-                    });
-                </script>
-                {% endblock %}
-            </div>
+        <div class="kanban-column-body" id="NS">
+            {% for task in tasks|filter_status:"NS" %}
+            {% include 'includes/task_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="BL">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Blocked</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"BL"|length }}</span>
+        </div>
+        <div class="kanban-column-body" id="BL">
+            {% for task in tasks|filter_status:"BL" %}
+            {% include 'includes/task_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="PR">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">In progress</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"PR"|length }}</span>
+        </div>
+        <div class="kanban-column-body" id="PR">
+            {% for task in tasks|filter_status:"PR" %}
+            {% include 'includes/task_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="DN">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Done</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"DN"|length }}</span>
+        </div>
+        <div class="kanban-column-body" id="DN">
+            {% for task in tasks|filter_status:"DN" %}
+            {% include 'includes/task_card.html' %}
+            {% endfor %}
         </div>
     </div>
 </div>
+{% else %}
+<p>No tasks in this board.</p>
+{% endif %}
+
+{% include 'includes/close_board_modal.html' with board=board %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var editBtn = document.getElementById('editBtn');
+      var saveBtn = document.getElementById('saveBtn');
+      var boardTitle = document.getElementById('boardTitle');
+      var boardDescription = document.getElementById('boardDescription');
+
+      // Function to toggle editable styling
+      function toggleEditableStyle(element, isEditable) {
+          if (isEditable) {
+              element.classList.add('editable');
+          } else {
+              element.classList.remove('editable');
+          }
+      }
+
+      // Toggle editability on button click
+      editBtn.addEventListener('click', function(){
+          // Toggle contentEditable and style
+          [boardTitle, boardDescription].forEach(function(element) {
+              element.contentEditable = "true";
+              toggleEditableStyle(element, true);
+          });
+
+          boardTitle.focus(); // Focus on the name field to start editing
+          editBtn.style.display = 'none';
+          saveBtn.style.display = 'inline';
+      });
+
+      // Save the changes
+      saveBtn.addEventListener('click', function(){
+          // Toggle contentEditable and remove style
+          [boardTitle, boardDescription].forEach(function(element) {
+              element.contentEditable = "false";
+              toggleEditableStyle(element, false);
+          });
+
+          editBtn.style.display = 'inline';
+          saveBtn.style.display = 'none';
+
+          var JsonData = {
+             boardTitle: boardTitle.textContent,
+             boardDescription: boardDescription.textContent,
+             csrfmiddlewaretoken: '{{ csrf_token }}'
+          };
+
+          $.ajax({
+              url: "{% url 'board_update' board.id %}",
+              type: "POST",
+              contentType: "application/json",  // Indicating the type of content being sent
+              data: JSON.stringify(JsonData),  // Converting the JavaScript object to a JSON string
+              success: function(data) {
+                  console.log('Success:', data);
+              },
+              error: function(error) {
+                  console.error('Error:', error);
+              }
+          });
+      });
+    });
+    function displayMessage(message) {
+        var html = `
+            <div class="container-fluid p-0">
+                <div class="alert alert-danger alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="True">&times;</span>
+                    </button>
+                    ${message}
+                </div>
+            </div>`;
+
+        $('#message-container').append(html);
+        // Fade out the message after 5 seconds
+        $(".alert").delay(5000).fadeOut(200, function() {
+            $(this).remove();
+        });
+    }
+
+    // Draggable tasks
+    function refreshColumnCounts() {
+        document.querySelectorAll('.kanban-column').forEach(function (column) {
+            var count = column.querySelector('.kanban-column-body').children.length;
+            column.querySelector('.kanban-column-count').textContent = count;
+        });
+    }
+
+    document.querySelectorAll('.kanban-column-body').forEach(function (columnBody) {
+        Sortable.create(columnBody, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: function (evt) {
+                var fromColumn = evt.from.id;
+                var toColumn = evt.to.id;
+
+                refreshColumnCounts();
+
+                if (fromColumn === toColumn) {
+                    return;
+                }
+
+                var taskId = evt.item.id.split('_')[1];
+                var item = evt.item;
+                var fromEl = evt.from;
+                var oldIndex = evt.oldIndex;
+
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'task_change_status' 0 %}".replace("0", taskId),
+                    data: {
+                        new_status: toColumn,
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    error: function (xhr) {
+                        // Roll back the move on failure
+                        var reference = fromEl.children[oldIndex] || null;
+                        fromEl.insertBefore(item, reference);
+                        refreshColumnCounts();
+
+                        if (xhr.status === 403) {
+                            displayMessage(xhr.responseJSON.error);
+                        } else {
+                            displayMessage("An unexpected error occurred.");
+                        }
+                    }
+                });
+            },
+        });
+    });
+</script>
+{% endblock %}

@@ -10,12 +10,11 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/todoPlanner/style.css' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'css/todoPlanner/todo2.png' %}">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark">
+<nav class="navbar navbar-expand-lg todo-navbar">
     <a class="navbar-brand" href="{% url 'index' %}">
         <img class="logo" src="{% static 'css/todoPlanner/todo2.png' %}"/>
         <span><b>TODO APP</b></span>
@@ -34,7 +33,7 @@
                 <a class="nav-link" href="{% url 'user_profile' user.profile.id %}">
                     Your Profile
                     <img src="{{ user.profile.avatar.url }}" alt="Avatar"
-                         style="width: 25px; height: 25px; border-radius: 50%;">
+                         style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border);">
                 </a>
                 {% endif %}
             </li>
@@ -47,25 +46,37 @@
     </div>
 </nav>
 
-<div class="container mt-4">
-    {% if messages %}
-    <div id="message-container">
-      {% for message in messages %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      {% endfor %}
+<div id="message-container" class="container-fluid pt-3">
+  {% for message in messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
-    {% endif %}
-    {% block content %}
-    {% endblock %}
+  {% endfor %}
+</div>
+<div class="body-row">
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+            {% block sidebar %}
+            {% include 'includes/global_nav.html' %}
+            {% endblock %}
+        </div>
+    </aside>
+    <main class="main">
+        {% block content %}
+        {% endblock %}
+    </main>
 </div>
 
 <!--  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>-->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    $.ajaxSetup({
+        headers: { "X-CSRFToken": '{{ csrf_token }}' }
+    });
+</script>
 </body>
 </html>

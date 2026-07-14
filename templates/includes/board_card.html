@@ -1,0 +1,21 @@
+<div class="board-card{% if board.is_archived %} is-archived{% endif %}">
+    <a href="{% url 'board_detail' board.id %}" class="board-card-link">
+        <div class="board-card-top">
+            <span class="board-card-title">{{ board.title }}</span>
+            {% if board.is_archived %}<span class="badge-closed">Closed</span>{% endif %}
+        </div>
+        {% if board.description %}
+        <p class="board-card-desc">{{ board.description }}</p>
+        {% endif %}
+        <div class="board-card-meta">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h12M4 10h12M4 15h8"/></svg>
+            {{ board.todoitem_set.count }} task{{ board.todoitem_set.count|pluralize }}
+        </div>
+    </a>
+    {% if show_delete %}
+    <button type="button" class="board-card-delete" title="Delete board"
+            data-toggle="modal" data-target="#deleteBoardModal" data-boardid="{{ board.id }}">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h10M8 6V4.5h4V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6"/></svg>
+    </button>
+    {% endif %}
+</div>

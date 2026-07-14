@@ -172,6 +172,7 @@ class BoardManageView(BoardAdminRequiredMixin, UpdateView):
     model = TodoList
     form_class = ManageBoardForm
     template_name = 'manage_board.html'
+    context_object_name = 'board'
 
     def get_success_url(self):
         return reverse_lazy('board_detail', kwargs={'pk': self.object.pk})
@@ -221,6 +222,11 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
     model = TodoItem
     form_class = CreateTaskForm
     template_name = "create_task.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['board'] = get_object_or_404(TodoList, pk=self.kwargs.get('board_id'))
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

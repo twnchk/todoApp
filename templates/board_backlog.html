@@ -1,59 +1,26 @@
 {% extends 'base.html' %}
 {% block title %} TODO Backlog{% endblock %}
-{% block content %}
-<div><a href="{% url 'board_detail' board.id %}">&#8592; Back</a></div>
-<div class="container-fluid">
-    <div class="row">
-        <!-- Left-side panel -->
-        <div class="col-md-3">
-            <div class="list-group rounded-container">
-                {% if not board.is_archived %}
-                <a href="{% url 'task_create' board.id %}"
-                   class="list-group-item list-group-item-action bg-primary text-white btn-sm text-center">
-                    Add task
-                </a>
-                {% else %}
-                <a href="{% url 'task_create' board.id %}"
-                   class="list-group-item list-group-item-action bg-primary text-white btn-sm disabled text-center">
-                    Board is closed
-                </a>
-                {% endif %}
-            </div>
-        </div>
 
-        <!-- Tasks List -->
-        <div class="col-md-9">
-            <div class="list-group rounded-container">
-                {% if tasks %}
-                <h1>{{ tasks.board }}</h1>
-                {% for task in tasks %}
-                <a href="{% url 'task_detail' task.id %}"
-                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center taskList"
-                   data-completed="{{ task.status }}">
-                    {{ task }}
-                </a>
-                {% endfor %}
-                {% else %}
-                <div class="list-group-item">No tasks found.</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% block sidebar %}
+{% include 'includes/board_sidebar.html' with board=board active='backlog' %}
+{% endblock %}
+
+{% block content %}
+<div class="board-header">
+    <h1 class="board-title">{{ board.title }}</h1>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get all the list items in the task list
-        var tasks = document.querySelectorAll('.taskList');
+<div class="task-list">
+    {% for task in tasks %}
+    {% include 'includes/task_row.html' with task=task %}
+    {% empty %}
+    <div class="empty-state">No tasks found.</div>
+    {% endfor %}
+</div>
 
-        // Loop through each task and apply strikethrough if completed
-        tasks.forEach(function(task) {
-            var isCompleted = task.getAttribute('data-completed') === "DN";
-            if (isCompleted) {
-                task.style.textDecoration = 'line-through';
-            }
-        });
-    });
-</script>
-
+{% if board.is_archived %}
+{% include 'includes/reopen_board_modal.html' with board=board %}
+{% else %}
+{% include 'includes/close_board_modal.html' with board=board %}
+{% endif %}
 {% endblock %}

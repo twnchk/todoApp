@@ -1,0 +1,42 @@
+<div class="modal fade" id="closeConfirmModal" tabindex="-1" role="dialog"
+     aria-labelledby="modalLabel" aria-hidden="true" data-boardid="{{ board.id }}">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Confirm Close</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to close this board?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="closeBoard()">Close Board
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function closeBoard() {
+        var modal = $('#closeConfirmModal');
+        var boardId = modal.data('boardid');
+        var closeUrl = `/boards/${boardId}/close`;
+        $.ajax({
+            url: closeUrl,
+            type: "POST",
+            success: function(response) {
+                if (response.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Error:', response.message);
+                }
+            },
+            error: function(error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+</script>

@@ -1,40 +1,72 @@
 {% extends 'base.html' %}
 {% block title %} TODO Homepage {% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <div class="container rounded-container">
+<div class="rounded-container home-hero">
+    <div>
+        {% if request.user.is_authenticated %}
+        <h1>Welcome back, {{ request.user.username }}</h1>
+        <p>Jump back into your boards, review the backlog, or start something new.</p>
+        {% else %}
         <h1>TODO APP</h1>
-    </div>
-    <div class="container rounded-container">
-        <div class="container widget-container">
-            <a href="{% url 'board_create' %}" class="widget-link">
-                <div class="rounded-container widget-green">Create new board</div>
-            </a>
-            {% if request.user.is_authenticated %}
-                {% if request.user.is_superuser %}
-                <a href="{% url 'all_boards_list' %}" class="widget-link">
-                    <div class="rounded-container widget">All Boards</div>
-                </a>
-                {% endif %}
-            <a href="{% url 'boards_list' %}" class="widget-link">
-                <div class="rounded-container widget">Boards</div>
-            </a>
-            <a href="{% url 'archived_boards' %}" class="widget-link">
-                <div class="rounded-container widget">Boards archive</div>
-            </a>
-            <a href="{% url 'user_profile' user.id %}" class="widget-link">
-                <div class="rounded-container widget">Profile</div>
-            </a>
-            {% else %}
-            <a href="{% url 'user_login' %}" class="widget-link">
-                <div class="rounded-container widget">Login</div>
-            </a>
-            <a href="{% url 'register' %}" class="widget-link">
-                <div class="rounded-container widget">Sign up</div>
-            </a>
-            {% endif %}
-        </div>
+        <p>A simple, Jira-like way to plan work with your team — boards, tasks and drag-and-drop status tracking.</p>
+        {% endif %}
     </div>
 </div>
 
+<div class="quick-links">
+    <a href="{% url 'board_create' %}" class="quick-link-card is-primary">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+        </span>
+        <span class="quick-link-title">Create new board</span>
+        <p class="quick-link-desc">Start a fresh board for a new project.</p>
+    </a>
+    {% if request.user.is_authenticated %}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'all_boards_list' %}" class="quick-link-card">
+            <span class="quick-link-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3l6.5 3.5v7L10 17l-6.5-3.5v-7L10 3z"/></svg>
+            </span>
+            <span class="quick-link-title">All Boards</span>
+            <p class="quick-link-desc">Every board across the whole app.</p>
+        </a>
+        {% endif %}
+    <a href="{% url 'boards_list' %}" class="quick-link-card">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.3"/><rect x="11" y="3" width="6" height="6" rx="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.3"/><rect x="11" y="11" width="6" height="6" rx="1.3"/></svg>
+        </span>
+        <span class="quick-link-title">Boards</span>
+        <p class="quick-link-desc">Boards you own or are a member of.</p>
+    </a>
+    <a href="{% url 'archived_boards' %}" class="quick-link-card">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h12M4 5v10h12V5M4 5l1.5-2h9L16 5"/></svg>
+        </span>
+        <span class="quick-link-title">Boards archive</span>
+        <p class="quick-link-desc">Closed boards you can reopen anytime.</p>
+    </a>
+    <a href="{% url 'user_profile' user.id %}" class="quick-link-card">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1-3.2 3.8-5 6.5-5s5.5 1.8 6.5 5"/></svg>
+        </span>
+        <span class="quick-link-title">Profile</span>
+        <p class="quick-link-desc">Your account, avatar and password.</p>
+    </a>
+    {% else %}
+    <a href="{% url 'user_login' %}" class="quick-link-card">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 4l6 6-6 6M4 10h10"/></svg>
+        </span>
+        <span class="quick-link-title">Login</span>
+        <p class="quick-link-desc">Sign in to your account.</p>
+    </a>
+    <a href="{% url 'register' %}" class="quick-link-card">
+        <span class="quick-link-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c1-3.2 3.8-5 6.5-5s5.5 1.8 6.5 5"/></svg>
+        </span>
+        <span class="quick-link-title">Sign up</span>
+        <p class="quick-link-desc">Create a free account.</p>
+    </a>
+    {% endif %}
+</div>
 {% endblock %}

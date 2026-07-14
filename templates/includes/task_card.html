@@ -1,0 +1,25 @@
+{% load static %}
+<div class="card mb-2{% if not readonly %} draggable-card{% endif %}" id="task_{{ task.id }}">
+    <a href="{% url 'task_detail' task.id %}" class="card-link">
+        <div class="card-body">
+            <div class="card-top-row">
+                <span class="card-key">#{{ task.id }}</span>
+                {% if task.high_priority %}
+                <svg class="priority-flag" viewBox="0 0 20 20" fill="currentColor" aria-label="High priority">
+                    <path d="M5 2v16M5 3h9l-2.2 3L14 9H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                </svg>
+                {% endif %}
+            </div>
+            <p class="card-title">{{ task.name }}</p>
+            <div class="assignee-info d-flex align-items-center">
+                {% if task.assignee %}
+                <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image" class="user-avatar">
+                <span class="assignee-username">{{ task.assignee.username }}</span>
+                {% else %}
+                <img src="{% static 'defaults/default_avatar.png' %}" alt="Unassigned" class="user-avatar">
+                <span class="assignee-username">Unassigned</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+</div>

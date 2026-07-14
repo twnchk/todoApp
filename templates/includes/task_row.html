@@ -1,0 +1,20 @@
+{% load static %}
+<a href="{% url 'task_detail' task.id %}" class="task-row{% if task.status == 'DN' %} is-done{% endif %}">
+    <span class="backlog-status-dot status-{{ task.status }}"></span>
+    <span class="task-row-key">#{{ task.id }}</span>
+    <span class="task-row-title">{{ task.name }}</span>
+    {% if task.high_priority %}
+    <svg class="priority-flag" viewBox="0 0 20 20" fill="currentColor" aria-label="High priority">
+        <path d="M5 2v16M5 3h9l-2.2 3L14 9H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+    {% endif %}
+    <span class="task-row-assignee">
+        {% if task.assignee %}
+        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image" class="user-avatar">
+        <span class="assignee-username">{{ task.assignee.username }}</span>
+        {% else %}
+        <img src="{% static 'defaults/default_avatar.png' %}" alt="Unassigned" class="user-avatar">
+        <span class="assignee-username">Unassigned</span>
+        {% endif %}
+    </span>
+</a>

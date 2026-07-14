@@ -1,162 +1,78 @@
 {% extends 'base.html' %}
 {% block title %} TODO Backlog {% endblock %}
+
+{% block sidebar %}
+{% include 'includes/board_sidebar.html' with board=board active='detail' %}
+{% endblock %}
+
 {% block content %}
 {% load filter %}
-<div class="container-fluid">
-    <div id="message-container"></div>
-    {% if board %}
-    <div class="container rounded-container">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4>Board (closed): <span id="boardTitle">{{ board.title }}</span></h4>
+{% if board %}
+<div class="board-header">
+    <div>
+        <div class="board-title-row">
+            <h1 class="board-title">{{ board.title }}</h1>
+            <span class="badge-closed">Closed</span>
         </div>
-        <h6>Description: <span id="boardDescription">{{ board.description }}</span></h6>
+        <p class="board-desc">{{ board.description }}</p>
     </div>
-    {% endif %}
-    <div class="row">
-        <!-- Left-side menu -->
-        <div class="col-md-3">
-            <!-- Menu content goes here -->
-            <ul class="nav flex-column side-menu">
-                <li class="nav-item mt-2">
-                    <a class="btn btn-warning btn-sm btn-block" data-toggle="modal" data-target="#closeConfirmModal">
-                        Reopen Board
-                    </a>
-                <li class="nav-item mt-2">
-                    <a class="btn btn-primary btn-sm btn-block" href="{% url 'board_backlog' board.id %}"> Backlog </a>
-                </li>
-                <!-- Modal -->
-                <div class="modal fade" id="closeConfirmModal" tabindex="-1" role="dialog"
-                     aria-labelledby="modalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalLabel">Confirm</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to reopen this board?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" onclick="openBoard()">Reopen board
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </li>
-            </ul>
-        </div>
-        <!-- Centered content -->
-        <div class="col-md-9">
-            <div class="container rounded-container">
-                {% if tasks %}
-                <div class="row">
-                    <div class="col droppable-status" id="NS">
-                        <h4 class="card-subtitle mb-2 text-muted">Not started</h4>
-                        {% for task in tasks|filter_status:"NS" %}
-                        <div class="card mb-2" id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="BL">
-                        <h4 class="card-subtitle mb-2 text-muted">Blocked</h4>
-                        {% for task in tasks|filter_status:"BL" %}
-                        <div class="card mb-2 " id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="PR">
-                        <h4 class="card-subtitle mb-2 text-muted">In progress</h4>
-                        {% for task in tasks|filter_status:"PR" %}
-                        <div class="card mb-2 " id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="col droppable-status" id="DN">
-                        <h4 class="card-subtitle mb-2 text-muted">Done</h4>
-                        {% for task in tasks|filter_status:"DN" %}
-                        <div class="card mb-2 " id="task_{{ task.id }}">
-                            <a href="{% url 'task_detail' task.id %}" class="card-link">
-                                <div class="card-body">
-                                    <p class="card-title">{{ task.name }}</p>
-                                    <div class="assignee-info d-flex align-items-center">
-                                        {% if task.assignee %}
-                                        <img src="{{ task.assignee.profile.avatar.url }}" alt="Assignee Image"
-                                             class="user-avatar mr-2">
-                                        <span class="assignee-username">{{ task.assignee.username }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <p>No tasks in this board.</p>
-                {% endif %}
-                <script>
-                    function openBoard() {
-                        const boardId = "{{ board.id }}";  // Ensure the board ID is available in the template
-                        const reopenUrl = "{% url 'board_reopen' board.id %}";
+</div>
+{% endif %}
 
-                        fetch(reopenUrl, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token
-                            }
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                window.location.reload();  // Reload the page or redirect to another page
-                            } else {
-                                console.error('Failed to reopen the board');
-                            }
-                        })
-                        .catch(error => console.error('Error:', error));
-                    }
-                </script>
-                {% endblock %}
-            </div>
+{% if tasks %}
+<div class="kanban-board">
+    <div class="kanban-column" data-status="NS">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Not started</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"NS"|length }}</span>
+        </div>
+        <div class="kanban-column-body">
+            {% for task in tasks|filter_status:"NS" %}
+            {% include 'includes/task_card.html' with readonly=True %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="BL">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Blocked</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"BL"|length }}</span>
+        </div>
+        <div class="kanban-column-body">
+            {% for task in tasks|filter_status:"BL" %}
+            {% include 'includes/task_card.html' with readonly=True %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="PR">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">In progress</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"PR"|length }}</span>
+        </div>
+        <div class="kanban-column-body">
+            {% for task in tasks|filter_status:"PR" %}
+            {% include 'includes/task_card.html' with readonly=True %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="kanban-column" data-status="DN">
+        <div class="kanban-column-head">
+            <span class="kanban-column-dot"></span>
+            <h4 class="kanban-column-name">Done</h4>
+            <span class="kanban-column-count">{{ tasks|filter_status:"DN"|length }}</span>
+        </div>
+        <div class="kanban-column-body">
+            {% for task in tasks|filter_status:"DN" %}
+            {% include 'includes/task_card.html' with readonly=True %}
+            {% endfor %}
         </div>
     </div>
 </div>
+{% else %}
+<p>No tasks in this board.</p>
+{% endif %}
+
+{% include 'includes/reopen_board_modal.html' with board=board %}
+{% endblock %}

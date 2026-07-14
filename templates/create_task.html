@@ -1,18 +1,27 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% block title %} TODO Create task {% endblock %}
+
+{% block sidebar %}
+{% include 'includes/board_sidebar.html' with board=board active='add' %}
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="container rounded-container">
-        <h1>Add task</h1>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <button class="btn btn-primary btn-sm" type="submit">Add task</button>
-        </form>
-    </div>
+<div class="container rounded-container form-card">
+    <h1>Add task</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button class="btn btn-primary btn-sm" type="submit">Add task</button>
+    </form>
 </div>
 <script>
     console.log({{form.errors}});
 </script>
+
+{% if board.is_archived %}
+{% include 'includes/reopen_board_modal.html' with board=board %}
+{% else %}
+{% include 'includes/close_board_modal.html' with board=board %}
+{% endif %}
 {% endblock %}

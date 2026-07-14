@@ -2,104 +2,96 @@
 {% block title %} TODO Task {% endblock %}
 {% block content %}
 {% load static %}
-<div class="container rounded-container">
-    {% if task %}
-    <div class="d-flex d-flex align-items-center mb-2">
-        <div class="p-2 flex-grow-1"><a href="{{request.META.HTTP_REFERER|escape}}">&#8592; Back</a></div>
-        <div class="p-2">
-            <button id="discardBtn" class="btn btn-primary btn-sm" style="display:none;">Discard</button>
-        </div>
-        <div class="p-2">
+{% if task %}
+<div class="rounded-container task-detail-card">
+    <div class="task-toolbar">
+        <a href="{{request.META.HTTP_REFERER|escape}}" class="back-link">&#8592; Back</a>
+        <div class="task-toolbar-actions">
+            <button id="discardBtn" class="btn btn-secondary btn-sm" style="display:none;">Discard</button>
             <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
-        </div>
-        <div class="p-2">
             {% if not task.board.is_archived %}
-            <button id="editBtn" class="btn btn-primary btn-sm">Edit</button>
+            <button id="editBtn" class="btn btn-light btn-sm">Edit</button>
             {% endif %}
         </div>
     </div>
-    {% if task.high_priority %}
-    <h3>
-        <a href="{% url 'board_detail' task.board.id %}">[{{ task.board }}]: </a>
-        <span id="taskName" contenteditable="false" style="color:red;">{{ task.name }}</span>
-    </h3>
-    {% else %}
-    <h3>
-        <a href="{% url 'board_detail' task.board.id %}">
-            {% if not task.board.is_archived %}
-                [{{ task.board }}]:
-            {% else %}
-                [Closed: {{ task.board }}]:
-            {% endif %}
+
+    <div class="task-heading-row">
+        <a href="{% url 'board_detail' task.board.id %}" class="task-board-link">
+            {% if task.board.is_archived %}Closed: {% endif %}{{ task.board }}
         </a>
-        <span id="taskName" contenteditable="false"> {{ task.name }}</span>
-    </h3>
-    {% endif %}
-    <div class="assignee-info d-flex align-items-center">
-        <div>
-            <strong>Author:</strong>
-            <a href="{% url 'user_profile' task.author.profile.id %}">
+        {% if task.high_priority %}
+        <svg class="priority-flag" viewBox="0 0 20 20" fill="currentColor" aria-label="High priority">
+            <path d="M5 2v16M5 3h9l-2.2 3L14 9H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+        {% endif %}
+    </div>
+    <h1 class="task-title" id="taskName" contenteditable="false">{{ task.name }}</h1>
+
+    <div class="task-meta-grid">
+        <div class="task-meta-row">
+            <span class="task-meta-label">Author</span>
+            <a href="{% url 'user_profile' task.author.profile.id %}" class="task-meta-person">
+                <img src="{{ task.author.profile.avatar.url }}" alt="Author Image" class="user-avatar">
                 <span class="assignee-username">{{ task.author }}</span>
-                <img src="{{ task.author.profile.avatar.url }}" alt="Assignee Image" class="user-avatar mr-2">
             </a>
+        </div>
+
+        <div class="task-meta-row">
+            <span class="task-meta-label">Assignee</span>
+            <span id="assigneeText" class="task-meta-value">
+                {% if task.assignee %}
+                <a href="{% url 'user_profile' task.assignee.profile.id %}" class="task-meta-person">
+                    <span class="assignee-username">{{ task.assignee.username }}</span>
+                </a>
+                {% else %}
+                    Unassigned
+                {% endif %}
+            </span>
+
+            <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm" style="display: none;">
+                {% for assignee in assignees %}
+                <option value="{{ assignee.pk }}" data-avatar="{{ assignee.profile.avatar.url }}" {% if task.assignee == assignee.id %}selected{% endif %}>
+                    {{ assignee }}
+                </option>
+                {% if forloop.last %}
+                    <option value="unassigned" data-avatar="{% static 'defaults/default_avatar.png' %}">
+                        Unassigned
+                    </option>
+                {% endif %}
+                {% endfor %}
+            </select>
+
+            <img id="assigneeAvatar"
+                 src="{% if task.assignee %}{{ task.assignee.profile.avatar.url }}{% else %}{% static 'defaults/default_avatar.png' %}{% endif %}"
+                 alt="Assignee Image"
+                 class="user-avatar">
+        </div>
+
+        <div class="task-meta-row">
+            <span class="task-meta-label">Status</span>
+            <select id="taskStatus" name="taskStatus" class="form-control form-control-sm task-status-select"
+                    disabled>
+                {% for value, display_text in task.taskStatus %}
+                <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
+                    {{ display_text }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="task-meta-row">
+            <span class="task-meta-label">Created</span>
+            <span class="task-meta-value">{{ task.created_at }}</span>
         </div>
     </div>
 
-    <!--    Edit task details-->
-    <div class="d-flex align-items-center">
-        <strong>Assignee:</strong>
-        <span id="assigneeText">
-            {% if task.assignee %}
-            <a href="{% url 'user_profile' task.assignee.profile.id %}">
-                <span class="assignee-username ml-2">{{ task.assignee.username }} </span>
-            </a>
-            {% else %}
-                Unassigned
-            {% endif %}
-        </span>
-
-        <select id="taskAssignee" name="taskAssignee" class="form-control form-control-sm" style="display: none;">
-            {% for assignee in assignees %}
-            <option value="{{ assignee.pk }}" data-avatar="{{ assignee.profile.avatar.url }}" {% if task.assignee == assignee.id %}selected{% endif %}>
-                {{ assignee }}
-            </option>
-            {% if forloop.last %}
-                <option value="unassigned" data-avatar="{% static 'defaults/default_avatar.png' %}">
-                    Unassigned
-                </option>
-            {% endif %}
-            {% endfor %}
-        </select>
-
-        <img id="assigneeAvatar"
-             src="{% if task.assignee %}{{ task.assignee.profile.avatar.url }}{% else %}{% static 'defaults/default_avatar.png' %}{% endif %}"
-             alt="Assignee Image"
-             class="user-avatar ml-2">
-
-    </div>
-
-    <div class="d-flex align-items-center">
-        <strong>Status:</strong>
-        <select id="taskStatus" name="taskStatus" class="form-control form-control-sm ml-2" style="width: auto;"
-                disabled>
-            {% for value, display_text in task.taskStatus %}
-            <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
-                {{ display_text }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div>
-        <strong>Created: </strong> {{ task.created_at }}
-    </div>
-
-    <div>
-        <strong>Description:</strong>
+    <div class="task-description-block">
+        <span class="task-meta-label">Description</span>
         <div id="taskDescription" class="task-description" contenteditable="false">
             {{ task.description|linebreaks }}
         </div>
     </div>
+
     {% if not task.board.is_archived %}
     <button id="deleteBtn" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteConfirmModal"
             data-taskid="{{ task.id }}">Delete
@@ -125,10 +117,12 @@
         </div>
     </div>
     {% endif %}
-    {% else %}
-    <p>Task not found</p>
-    {% endif %}
 </div>
+{% else %}
+<div class="rounded-container task-detail-card">
+    <p>Task not found</p>
+</div>
+{% endif %}
 <script>
     $.ajaxSetup({
         headers: { "X-CSRFToken": '{{ csrf_token }}' }
@@ -160,6 +154,7 @@
                 taskAssignee.style.width = "auto"; // Do not take 100% of content
                 [taskName, taskDescription].forEach((element) => {
                     element.contentEditable = true;
+                    element.classList.add('editable');
                 });
                 taskStatus.disabled = false;
             } else {
@@ -175,6 +170,7 @@
 
                 [taskName, taskDescription].forEach((element) => {
                     element.contentEditable = false;
+                    element.classList.remove('editable');
                 });
                 taskStatus.disabled = true;
             }
@@ -254,7 +250,4 @@
         });
     }
 </script>
-
 {% endblock %}
-
-

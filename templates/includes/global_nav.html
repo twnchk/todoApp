@@ -1,0 +1,24 @@
+{% if user.is_authenticated %}
+<ul class="nav flex-column side-menu">
+    <li class="nav-item">
+        <a class="side-link{% if request.resolver_match.url_name == 'boards_list' %} is-active{% endif %}" href="{% url 'boards_list' %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.3"/><rect x="11" y="3" width="6" height="6" rx="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.3"/><rect x="11" y="11" width="6" height="6" rx="1.3"/></svg>
+            Boards
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="side-link{% if request.resolver_match.url_name == 'archived_boards' %} is-active{% endif %}" href="{% url 'archived_boards' %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h12M4 5v10h12V5M4 5l1.5-2h9L16 5"/></svg>
+            Archive
+        </a>
+    </li>
+    {% if user.is_superuser %}
+    <li class="nav-item">
+        <a class="side-link{% if request.resolver_match.url_name == 'all_boards_list' %} is-active{% endif %}" href="{% url 'all_boards_list' %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3l6.5 3.5v7L10 17l-6.5-3.5v-7L10 3z"/></svg>
+            All Boards
+        </a>
+    </li>
+    {% endif %}
+</ul>
+{% endif %}

@@ -1,94 +1,20 @@
 {% extends 'base.html' %}
 {% block title %} TODO Boards {% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <h1>{{page_header}}</h1>
-    <div class="row">
-        <div class="col-md-3">
-            <div class="list-group rounded-container">
-                <a href="{% url 'board_create' %}"
-                   class="list-group-item list-group-item-action bg-primary text-white btn-sm text-center">
-                    Create New Board
-                </a>
-                <a href="{% url 'archived_boards' %}"
-                   class="list-group-item list-group-item-action bg-primary text-white btn-sm text-center mt-2">
-                    Archive
-                </a>
-            </div>
-        </div>
-
-        <div class="col-md-9">
-            <div class="list-group rounded-container">
-                {% for board in boards %}
-                {% if not board.is_archived %}
-                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                    <a href="{% url 'board_detail' board.id %}" class="text-decoration-none">
-                        {{ board.title }}
-                    </a>
-                    {% if board.show_delete_button %}
-                    <button id="deleteBtn_{{ board.id }}" class="btn btn-danger btn-sm"
-                            data-toggle="modal" data-target="#closeConfirmModal" data-boardid="{{ board.id }}">
-                        Delete
-                    </button>
-                    {% endif %}
-                </div>
-                {% endif %}
-                {% empty %}
-                <div class="list-group-item">No boards found.</div>
-                {% endfor %}
-                <!-- Modal structure -->
-                <div class="modal fade" id="closeConfirmModal" tabindex="-1" role="dialog"
-                     aria-labelledby="modalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalLabel">Confirm</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to delete this board?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="confirmDelete">Delete board</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="board-header">
+    <h1 class="board-title">{{ page_header }}</h1>
+    <a href="{% url 'board_create' %}" class="btn btn-primary btn-sm">+ Create New Board</a>
 </div>
-<script>
-    $('#closeConfirmModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Button that triggered the modal
-        var boardId = button.data('boardid'); // Extract info from data-* attributes
 
-        // If there is an old event, unbind it
-        $('#confirmDelete').off('click');
+<div class="board-card-grid">
+    {% for board in boards %}
+    {% if not board.is_archived %}
+    {% include 'includes/board_card.html' with board=board show_delete=board.show_delete_button %}
+    {% endif %}
+    {% empty %}
+    <div class="empty-state">No boards found.</div>
+    {% endfor %}
+</div>
 
-        // Bind a new event
-        $('#confirmDelete').on('click', function() {
-            deleteBoard(boardId);
-        });
-    });
-
-    function deleteBoard(boardId) {
-        var deleteUrl = `/boards/${boardId}/delete`;
-        $.ajax({
-            url: deleteUrl,
-            type: "POST",
-            headers: { "X-CSRFToken": '{{ csrf_token }}' },
-            success: function(response) {
-                // Refresh page on successful delete
-                window.location.reload();
-            },
-            error: function(error) {
-                console.error('Error:', error);
-            }
-        });
-    }
-</script>
+{% include 'includes/delete_board_modal.html' %}
 {% endblock %}

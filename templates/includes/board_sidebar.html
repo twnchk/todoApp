@@ -1,0 +1,47 @@
+{% include 'includes/global_nav.html' %}
+<div class="hr"></div>
+<ul class="nav flex-column side-menu">
+    <li class="nav-item">
+        {% if board.is_archived %}
+        <a class="side-link is-primary disabled">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+            Board is closed
+        </a>
+        {% else %}
+        <a class="side-link is-primary{% if active == 'add' %} is-active{% endif %}" href="{% url 'task_create' board.id %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+            Add Task
+        </a>
+        {% endif %}
+    </li>
+    <li class="nav-item">
+        <a class="side-link{% if active == 'backlog' %} is-active{% endif %}" href="{% url 'board_backlog' board.id %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h12M4 10h12M4 15h8"/></svg>
+            Backlog
+        </a>
+    </li>
+    {% if not board.is_archived %}
+    {% if user == board.owner or user.is_superuser %}
+    <li class="nav-item">
+        <a class="side-link{% if active == 'manage' %} is-active{% endif %}" href="{% url 'board_manage' board.id %}">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="2.6"/><path d="M10 3.5v2M10 14.5v2M16.5 10h-2M5.5 10h-2M14.8 5.2l-1.4 1.4M6.6 13.4l-1.4 1.4M14.8 14.8l-1.4-1.4M6.6 6.6L5.2 5.2"/></svg>
+            Manage board
+        </a>
+    </li>
+    {% endif %}
+    {% endif %}
+    <div class="hr"></div>
+    <li class="nav-item">
+        {% if board.is_archived %}
+        <a class="side-link" data-toggle="modal" data-target="#reopenConfirmModal">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10a6 6 0 1 0 6-6M4 10V6m0 4h4"/></svg>
+            Reopen Board
+        </a>
+        {% else %}
+        <a class="side-link is-warn" data-toggle="modal" data-target="#closeConfirmModal">
+            <svg class="side-link-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l8 8M14 6l-8 8"/></svg>
+            Close Board
+        </a>
+        {% endif %}
+    </li>
+</ul>
