@@ -246,6 +246,11 @@ a:hover {
   margin-bottom: 20px;
 }
 
+.board-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .board-title-row {
   display: flex;
   align-items: center;
@@ -260,10 +265,24 @@ a:hover {
   margin: 0;
 }
 
+.board-title-row .board-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.board-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
 .board-desc {
-  margin: 5px 0 0;
+  margin: 0;
   font-size: 0.85rem;
   color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
 }
 
 .subsection-title {
@@ -361,6 +380,30 @@ a:hover {
 .icon-btn svg {
   width: 14px;
   height: 14px;
+}
+.icon-btn.has-label {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.icon-btn.has-label svg {
+  flex: none;
+}
+
+.btn-discard {
+  background-color: var(--error-soft);
+  border: 1px solid var(--error-soft);
+  color: var(--error);
+}
+.btn-discard:hover {
+  background-color: var(--error-soft);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 /* ==========================================================================
@@ -966,32 +1009,29 @@ input[type="file"]::file-selector-button:hover {
   border-top: 1px solid var(--border);
 }
 
-.profile-field-label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.profile-avatar-form {
+.profile-actions-row {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.profile-password-link {
-  align-self: flex-start;
-  padding-left: 0;
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 600;
+.profile-avatar-form {
+  display: inline-flex;
 }
-.profile-password-link:hover {
-  color: var(--accent-strong);
+
+.profile-avatar-form input[type="file"] {
+  display: none;
+}
+
+.profile-email-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-email-edit input[type="email"] {
+  width: 220px;
 }
 
 /* ==========================================================================

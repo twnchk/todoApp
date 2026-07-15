@@ -20,20 +20,29 @@
 
     {% if request.user == profile.user %}
     <div class="profile-actions">
-        <form method="POST" enctype="multipart/form-data" class="profile-avatar-form">
-            {% csrf_token %}
-            <div>
-                <span class="profile-field-label">{{ form.avatar.label }}</span>
+        <div class="profile-actions-row" id="profileActionsRow">
+            <form method="POST" enctype="multipart/form-data" class="profile-avatar-form">
+                {% csrf_token %}
                 {{ form.avatar }}
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">Change avatar</button>
-        </form>
+                <button type="button" class="btn btn-light btn-sm" onclick="document.getElementById('{{ form.avatar.id_for_label }}').click()">Change avatar</button>
+            </form>
+
+            <button type="button" id="emailEditBtn" class="btn btn-light btn-sm">Change email</button>
+
+            <a href="{% url 'password_change' %}" class="btn btn-light btn-sm">Change password</a>
+        </div>
+
+        <div id="emailEditPanel" class="profile-email-edit" style="display:none;">
+            <input type="email" id="emailEditInput" class="form-control form-control-sm" placeholder="new@example.com">
+            <button type="button" id="emailSaveBtn" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" id="emailCancelBtn" class="btn btn-discard btn-sm">Cancel</button>
+        </div>
+
         {% if form.errors %}
             <div class="alert alert-danger">
                 {{ form.errors }}
             </div>
         {% endif %}
-        <a href="{% url 'password_change' %}" class="profile-password-link">Change password</a>
     </div>
     {% endif %}
 </div>
@@ -48,4 +57,34 @@
     <div class="empty-state">Not active in any boards yet.</div>
     {% endfor %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var actionsRow = document.getElementById('profileActionsRow');
+        var emailEditBtn = document.getElementById('emailEditBtn');
+        var emailEditPanel = document.getElementById('emailEditPanel');
+        var emailSaveBtn = document.getElementById('emailSaveBtn');
+        var emailCancelBtn = document.getElementById('emailCancelBtn');
+
+        function closeEmailPanel() {
+            emailEditPanel.style.display = 'none';
+            actionsRow.style.display = 'flex';
+        }
+
+        if (emailEditBtn) {
+            emailEditBtn.addEventListener('click', function () {
+                actionsRow.style.display = 'none';
+                emailEditPanel.style.display = 'inline-flex';
+            });
+        }
+
+        if (emailSaveBtn) {
+            emailSaveBtn.addEventListener('click', closeEmailPanel);
+        }
+
+        if (emailCancelBtn) {
+            emailCancelBtn.addEventListener('click', closeEmailPanel);
+        }
+    });
+</script>
 {% endblock %}

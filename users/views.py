@@ -46,18 +46,20 @@ def user_profile(request, id):
     profile = get_object_or_404(Profile, pk=id)
     user_boards = profile.user.allowed_boards.all()
 
-    context = {
-        'profile': profile,
-        'user_boards': user_boards,
-    }
-
     if request.method == 'POST':
+        if request.user != profile.user:
+            return render(request, 'forbidden.html')
+
         form = ProfileImageForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
     else:
         form = ProfileImageForm(instance=profile)
-    form_context = {'form': form}
-    context.update(form_context)
+
+    context = {
+        'profile': profile,
+        'user_boards': user_boards,
+        'form': form,
+    }
 
     return render(request, 'user_profile.html', context)

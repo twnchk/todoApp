@@ -9,15 +9,19 @@
 {% load filter %}
 {% if board %}
 <div class="board-header">
-    <div>
+    <div class="board-header-text">
         <div class="board-title-row">
             <h1 class="board-title" id="boardTitle" contenteditable="false">{{ board.title }}</h1>
-            <button id="editBtn" class="icon-btn" title="Edit">
+            <button id="editBtn" class="icon-btn has-label" title="Edit">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L7 16H4v-3z"/></svg>
+                <span>Edit</span>
             </button>
             <button id="saveBtn" class="btn btn-primary btn-sm" style="display:none;">Save</button>
         </div>
-        <p class="board-desc" id="boardDescription" contenteditable="false">{{ board.description }}</p>
+        <div class="board-desc-row">
+            <p class="board-desc" id="boardDescription" contenteditable="false">{{ board.description }}</p>
+            <button id="discardBtn" class="btn btn-discard btn-sm" style="display:none;">Discard</button>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -83,8 +87,11 @@
     document.addEventListener('DOMContentLoaded', function(){
       var editBtn = document.getElementById('editBtn');
       var saveBtn = document.getElementById('saveBtn');
+      var discardBtn = document.getElementById('discardBtn');
       var boardTitle = document.getElementById('boardTitle');
       var boardDescription = document.getElementById('boardDescription');
+      var originalTitle = boardTitle.textContent;
+      var originalDescription = boardDescription.textContent;
 
       // Function to toggle editable styling
       function toggleEditableStyle(element, isEditable) {
@@ -95,8 +102,22 @@
           }
       }
 
+      function exitEditMode() {
+          [boardTitle, boardDescription].forEach(function(element) {
+              element.contentEditable = "false";
+              toggleEditableStyle(element, false);
+          });
+
+          editBtn.style.display = 'inline-flex';
+          saveBtn.style.display = 'none';
+          discardBtn.style.display = 'none';
+      }
+
       // Toggle editability on button click
       editBtn.addEventListener('click', function(){
+          originalTitle = boardTitle.textContent;
+          originalDescription = boardDescription.textContent;
+
           // Toggle contentEditable and style
           [boardTitle, boardDescription].forEach(function(element) {
               element.contentEditable = "true";
@@ -105,19 +126,20 @@
 
           boardTitle.focus(); // Focus on the name field to start editing
           editBtn.style.display = 'none';
-          saveBtn.style.display = 'inline';
+          saveBtn.style.display = 'inline-flex';
+          discardBtn.style.display = 'inline-flex';
+      });
+
+      // Discard the changes
+      discardBtn.addEventListener('click', function(){
+          boardTitle.textContent = originalTitle;
+          boardDescription.textContent = originalDescription;
+          exitEditMode();
       });
 
       // Save the changes
       saveBtn.addEventListener('click', function(){
-          // Toggle contentEditable and remove style
-          [boardTitle, boardDescription].forEach(function(element) {
-              element.contentEditable = "false";
-              toggleEditableStyle(element, false);
-          });
-
-          editBtn.style.display = 'inline';
-          saveBtn.style.display = 'none';
+          exitEditMode();
 
           var JsonData = {
              boardTitle: boardTitle.textContent,

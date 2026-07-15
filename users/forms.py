@@ -20,7 +20,7 @@ class ProfileImageForm(forms.ModelForm):
         model = Profile
         fields = ['avatar']
         widgets = {
-            'avatar': forms.FileInput(),
+            'avatar': forms.FileInput(attrs={'onchange': 'this.form.submit()'}),
         }
         labels = {
             'avatar': _('Change avatar'),
