@@ -27,8 +27,6 @@
                 <button type="button" class="btn btn-light btn-sm" onclick="document.getElementById('{{ form.avatar.id_for_label }}').click()">Change avatar</button>
             </form>
 
-            <button type="button" id="emailEditBtn" class="btn btn-light btn-sm">Change email</button>
-
             <a href="{% url 'password_change' %}" class="btn btn-light btn-sm">Change password</a>
         </div>
 
@@ -57,34 +55,4 @@
     <div class="empty-state">Not active in any boards yet.</div>
     {% endfor %}
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var actionsRow = document.getElementById('profileActionsRow');
-        var emailEditBtn = document.getElementById('emailEditBtn');
-        var emailEditPanel = document.getElementById('emailEditPanel');
-        var emailSaveBtn = document.getElementById('emailSaveBtn');
-        var emailCancelBtn = document.getElementById('emailCancelBtn');
-
-        function closeEmailPanel() {
-            emailEditPanel.style.display = 'none';
-            actionsRow.style.display = 'flex';
-        }
-
-        if (emailEditBtn) {
-            emailEditBtn.addEventListener('click', function () {
-                actionsRow.style.display = 'none';
-                emailEditPanel.style.display = 'inline-flex';
-            });
-        }
-
-        if (emailSaveBtn) {
-            emailSaveBtn.addEventListener('click', closeEmailPanel);
-        }
-
-        if (emailCancelBtn) {
-            emailCancelBtn.addEventListener('click', closeEmailPanel);
-        }
-    });
-</script>
 {% endblock %}
